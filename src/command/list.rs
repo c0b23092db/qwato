@@ -78,7 +78,12 @@ pub fn list_entries(
 ) -> Result<()> {
     let mut targets = command_names.to_vec();
     if targets.is_empty() {
-        targets.push(config.default_command.clone());
+        targets.push(
+            config
+                .default_command
+                .clone()
+                .with_context(|| "Not Setting: default command")?,
+        );
     }
     let mut entries: BTreeMap<String, DataLog> = BTreeMap::new();
     for command_name in targets {

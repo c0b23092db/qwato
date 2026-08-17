@@ -7,6 +7,7 @@ use crate::utils::{
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use std::fs;
+use std::path::PathBuf;
 
 pub fn append_message(
     config: &Config,
@@ -15,13 +16,12 @@ pub fn append_message(
     as_task: bool,
 ) -> Result<()> {
     let command = check_command_exists(config, command_name)?;
-    let base_directory =
-        expand_home(config.base_directory.to_str().unwrap_or("~")).with_context(|| {
-            format!(
-                "Failed to expand base directory: {:?}",
-                config.base_directory
-            )
-        })?;
+    let base_directory = expand_home(
+        config
+            .base_directory
+            .as_ref()
+            .unwrap_or(&PathBuf::from("~")),
+    )?;
     let file_path = conversion_target_file_path(config, command_name, &command)?;
     let now_time = Local::now();
 

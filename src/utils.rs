@@ -5,10 +5,12 @@ use dirs::home_dir;
 use std::path::PathBuf;
 
 /// Change: '~'をユーザーのホームディレクトリに変換
-pub fn expand_home(path: &str) -> Result<PathBuf> {
+pub fn expand_home(path: &PathBuf) -> Result<PathBuf> {
     if path.starts_with("~") {
         let home = home_dir().ok_or_else(|| anyhow!("Failed to get home directory"))?;
-        let expanded_path = path.replacen("~", home.to_str().unwrap(), 1);
+        let expanded_path = path
+            .to_string_lossy()
+            .replacen("~", home.to_str().unwrap(), 1);
         Ok(PathBuf::from(expanded_path))
     } else {
         Ok(PathBuf::from(path))
@@ -30,7 +32,12 @@ pub fn conversion_target_file_path(
     command_name: &str,
     command: &CommandConfig,
 ) -> Result<PathBuf> {
-    let base_directory = expand_home(config.base_directory.to_str().unwrap_or("~"))?;
+    let base_directory = expand_home(
+        config
+            .base_directory
+            .as_ref()
+            .unwrap_or(&PathBuf::default()),
+    )?;
     let now = Local::now();
     let command_directory = command
         .directory
@@ -52,7 +59,12 @@ pub fn conversion_target_directory_path(
     config: &Config,
     command: &CommandConfig,
 ) -> Result<PathBuf> {
-    let base_directory = expand_home(config.base_directory.to_str().unwrap_or("~"))?;
+    let base_directory = expand_home(
+        config
+            .base_directory
+            .as_ref()
+            .unwrap_or(&PathBuf::default()),
+    )?;
     let now = Local::now();
     let command_directory = command
         .directory

@@ -50,28 +50,39 @@ Options:
   -n, --note           List all notes
   -t, --task           List all tasks
       --limit <LIMIT>  Show the limit of list messages
+      --command        Check to Use Command
       --load           Check to Load Config File
   -h, --help           Print help
   -V, --version        Print version
 ```
 
-### `--add`
-指定したファイルにメモを追記する。
-二つ目の引数以降はすべて一行で処理される。
+### 引数指定の考え方
+#### `--add` / `--check`
+一つ目の引数はコマンド、二つ目の引数以降はメッセージとして扱う。
 ```bash
-qwa <message>
-qwa <command> <message>
-qwa --add <message>
-qwa --add <command> <message>
+<command> <message>
+```
+#### それ以外
+すべての引数はコマンドとして扱う。
+```bash
+<command>　<command>　...
 ```
 
+### `--add`
+```bash
+qwa <message>
+qwa <command> <message>　<message>　...
+qwa --add <message>
+qwa --add <command> <message> <message> ...
+```
+指定したファイルにメモを追記する。二つ目の引数以降はすべて一行として扱われる。
+
 ### `--check`
-指定したファイルにチェックボックス付きでメモを追記する。
-二つ目の引数以降はすべて一行で処理される。
 ```bash
 qwa --check <message>
-qwa --check <command> <message>
+qwa --check <command> <message> <message> ...
 ```
+指定したファイルにチェックボックス付きでメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
 ### `--list`
 ```bash
@@ -79,6 +90,12 @@ qwa --list
 qwa --list <command> <command> ...
 ```
 コマンドで指定しているディレクトリのファイル群を参照し、リストとチェックボックスを表示する。
+
+#### `--limit`
+```bash
+qwa --list --limit 10
+```
+表示する数を指定する。
 
 ### `--note`
 ```bash
@@ -94,11 +111,15 @@ qwa --task <command> <command> ...
 ```
 コマンドで指定しているディレクトリのファイル群を参照し、チェックボックスを表示する。
 
-### `--limit`
+### `--command`
 ```bash
-qwa --list --limit 10
+qwa --command
 ```
-表示する数を指定する。
+使用可能なコマンドを簡易表示する。
+```bash
+qwa --command <command> <command> ...
+```
+指定したコマンドを詳細表示する。
 
 ### `--load`
 ```bash
@@ -120,24 +141,19 @@ qwa --version
 
 ## ⚙ 設定ファイル ⚙
 **注意事項**
-- どのOSでも`~/.config/qwato`を参照します。
-- Rustの[chrono](https://docs.rs/chrono)で日付を扱います。
+- `~/.config/qwato/config.toml`、`./qwato.toml`の順に読み込む。
+- Rustの[chrono](https://docs.rs/chrono)で日付を扱う。
 
 ### デフォルト設定
 ```toml
 base_directory = "~/Documents/Qwato"
-default_command = "default"
 time_format = "%H:%M:%S"
-
 [list]
 limit = 10
-
 [created]
 format = "%Y-%m-%d %H:%M:%S"
-
 [modified]
 format = "%Y-%m-%d %H:%M:%S"
-
 [command.default]
 auto_create = true
 file = "%Y-%m-%d.md"
@@ -151,8 +167,12 @@ not_format = false
 基準となるディレクトリ。
 ##### `default_command`
 コマンドの指定を行わない場合、デフォルトで使われるコマンドを指定する。
+設定がない場合、設定ファイルの一番最後に登録されているコマンドが使われる。
+##### `no_global`
+trueの場合、グローバル読み込みの対象外になる。
+カレントディレクトリの設定ファイルは常に読み込まれる。
 ##### `auto_command`
-- true: 強制的に`default_command`を実行するようにする。
+trueの場合、強制的に`default_command`を実行するようにする。
 ##### `time_format`
 リストの先頭に登録されるフォーマット。
 chronoが使用可能。
@@ -181,14 +201,11 @@ chronoが使用可能。
 ##### `template`
 ファイルの新規作成時、コピー元となるファイルのパス。
 ##### `directory`
-`base_directory`から見るディレクトリの場所。指定しない場合、`base_directory`を使う。
+`base_directory`から見るディレクトリの場所を指定する。指定しない場合、`base_directory`を使う。
 chronoが使用可能。
 ##### `file`
-ファイルの名前。
+ファイルの名前を指定する。
 chronoが使用可能。
-##### `end_line`
-- true: セクション末尾へ追加する。
-- false: セクション先頭へ追加する。
 ##### `insert`
 chronoが使用可能。
 挿入位置の基準となる行。完全一致で探す。
@@ -199,9 +216,17 @@ chronoが使用可能。
 設定されていない場合は以下のように動作する。
 - `end_line`がtrueの場合、ファイル末尾へ追加する。
 - `end_line`がfalseの場合、frontmatterの後、本文先頭へ追加する。
+##### `tags`
+```toml
+tags = ["tag1", "tag2"]
+```
+タグを指定する。複数指定する場合はカンマ区切りで指定する。
 ##### `not_format`
 - true: リストのみにする
 - false: 時刻を挿入する
+##### `end_line`
+- true: セクション末尾へ追加する。
+- false: セクション先頭へ追加する。
 
 ### 設定例
 #### Obsidianとの連携

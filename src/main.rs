@@ -1,4 +1,5 @@
 mod config;
+use anyhow::Context;
 use config::Config;
 use config::load_config;
 mod command;
@@ -63,7 +64,10 @@ fn run() -> Result<()> {
             .unwrap_or(config.list.as_ref().map(|list| list.limit).unwrap_or(10)),
     );
     match args {
-        args if args.load => return Ok(println!("{:#?}", config)),
+        args if args.load => {
+            println!("{:#?}", config);
+            Ok(())
+        }
         args if args.command => format_command_list(&config, &args.argument),
         args if args.list => list_entries(&config, &args.argument, false, false),
         args if args.note || args.task => {
@@ -72,7 +76,7 @@ fn run() -> Result<()> {
         _ => {
             // args if args.add || args.check (Add,Check)
             let (command, message) = check_argument_count(&config, &args.argument)?;
-            return append_message(&config, &command, &message, args.check);
+            append_message(&config, &command, &message, args.check)
         }
     }
 }
@@ -81,9 +85,12 @@ fn run() -> Result<()> {
 /// Returns: (command:String, message:String)
 fn check_argument_count(config: &Config, argument: &[String]) -> Result<(String, String)> {
     if argument.is_empty() {
-        return Err(anyhow!("No message provided"));
+        Err(anyhow!("No message provided"))
     } else if config.auto_command || argument.len() == 1 {
-        let command = config.default_command.clone();
+        let command = config
+            .default_command
+            .clone()
+            .with_context(|| "Not Config: defualt_command")?;
         let message = argument[0].clone();
         Ok((command, message))
     } else {
