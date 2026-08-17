@@ -53,11 +53,11 @@ pub struct CommandConfig {
     #[serde(default)]
     pub directory: Option<PathBuf>,
     #[serde(default)]
-    pub template: Option<PathBuf>,
-    #[serde(default)]
     pub file: Option<PathBuf>,
     #[serde(default)]
     pub tags: Option<Vec<String>>,
+    #[serde(default)]
+    pub template: Option<PathBuf>,
     #[serde(default)]
     pub insert: Option<String>,
     #[serde(default)]
