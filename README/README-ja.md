@@ -147,6 +147,7 @@ qwa --version
 ### デフォルト設定
 ```toml
 base_directory = "~/Documents/Qwato"
+default_command = "default"
 time_format = "%H:%M:%S"
 [list]
 limit = 10
@@ -167,7 +168,6 @@ not_format = false
 基準となるディレクトリ。
 ##### `default_command`
 コマンドの指定を行わない場合、デフォルトで使われるコマンドを指定する。
-設定がない場合、設定ファイルの一番最後に登録されているコマンドが使われる。
 ##### `no_global`
 trueの場合、グローバル読み込みの対象外になる。
 カレントディレクトリの設定ファイルは常に読み込まれる。
