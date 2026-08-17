@@ -39,6 +39,13 @@ pub fn append_message(
     let contents = fs::read_to_string(&file_path)
         .with_context(|| format!("Failed to read file: {:?}", file_path))?;
     let mut lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
+    // Format: Tags
+    let tags = if let Some(tags) = &command.tags {
+        format!("#{} ", tags.join(" #"))
+    } else {
+        String::new()
+    };
+    // Format: Time
     let set_time = if command.not_format {
         String::new()
     } else {
@@ -48,9 +55,9 @@ pub fn append_message(
             + " "
     };
     let in_message = if !as_task {
-        format!("- {}{}", set_time, message).to_string()
+        format!("- {}{}{}", set_time, tags, message).to_string()
     } else {
-        format!("- [ ] {}{}", set_time, message).to_string()
+        format!("- [ ] {}{}{}", set_time, tags, message).to_string()
     };
     // Update: Modified Field
     if let Some(modified_config) = &config.modified

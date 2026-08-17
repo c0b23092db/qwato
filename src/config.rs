@@ -57,6 +57,8 @@ pub struct CommandConfig {
     #[serde(default)]
     pub file: Option<PathBuf>,
     #[serde(default)]
+    pub tags: Option<Vec<String>>,
+    #[serde(default)]
     pub insert: Option<String>,
     #[serde(default)]
     pub end_line: bool,
@@ -73,6 +75,7 @@ impl Default for Config {
                 auto_create: true,
                 directory: None,
                 file: Some(PathBuf::from("%Y-%m-%d")),
+                tags: None,
                 template: None,
                 insert: None,
                 end_line: false,
