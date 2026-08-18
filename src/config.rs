@@ -123,8 +123,11 @@ impl Config {
     }
 }
 
-pub fn load_config() -> Result<Config> {
-    let Ok(config_paths) = find_config_path() else {
+pub fn load_config(config_path: &Option<PathBuf>) -> Result<Config> {
+    if let Some(config_path) = config_path && !config_path.exists() {
+        anyhow::bail!("Failed to Find: config file - {}", config_path.display())
+    };
+    let Ok(config_paths) = find_config_path(config_path) else {
         return Config::default();
     };
     let mut config = Config::new();
@@ -139,9 +142,10 @@ pub fn load_config() -> Result<Config> {
 }
 
 /// Search: Config File Path
-/// 1. Current directory: ./qwato.toml
-/// 2. Home directory: ~/.config/qwato/config.toml
-fn find_config_path() -> Result<Vec<PathBuf>> {
+/// 1. Optional Config Path: --config <config_path>
+/// 2. Current directory: ./qwato.toml
+/// 3. Home directory: ~/.config/qwato/config.toml
+fn find_config_path(path: &Option<PathBuf>) -> Result<Vec<PathBuf>> {
     let mut config_paths = Vec::new();
     // Home directory: ~/.config/qwato/config.toml
     let config_path = home_dir()
@@ -158,6 +162,10 @@ fn find_config_path() -> Result<Vec<PathBuf>> {
         .join("qwato.toml");
     if current_config_path.exists() {
         config_paths.push(current_config_path);
+    }
+    // Optional Config Path: --config <config_path>
+    if let Some(config_path) = path {
+        config_paths.push(config_path.clone());
     }
     if config_paths.is_empty() {
         anyhow::bail!("Failed to Find: config file");

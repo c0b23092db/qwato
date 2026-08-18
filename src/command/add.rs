@@ -107,7 +107,6 @@ fn find_insert_index(lines: &[String], insert: &str, end_line: bool) -> Result<u
         .iter()
         .rposition(|line| line.trim() == insert)
         .ok_or_else(|| anyhow!("Not Found: Insert line {:?}", insert))?;
-    println!("{}", anchor);
     if !end_line {
         return Ok(anchor + 1);
     }

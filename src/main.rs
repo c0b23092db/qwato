@@ -10,6 +10,7 @@ mod utils;
 
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -25,9 +26,6 @@ struct Args {
     /// Add a new checkbox
     #[arg(short, long)]
     checkbox: bool,
-    /// Tags for the message
-    #[arg(long, value_delimiter = ',')]
-    tag: Vec<String>,
     /// List all commands
     #[arg(short, long)]
     list: bool,
@@ -37,6 +35,9 @@ struct Args {
     /// List all tasks
     #[arg(short, long)]
     task: bool,
+    /// Tags for the message
+    #[arg(long, value_delimiter = ',', num_args = 1..)]
+    tag: Vec<String>,
     /// Show the limit of list messages
     #[arg(long)]
     limit: Option<usize>,
@@ -46,6 +47,9 @@ struct Args {
     /// Check to Load Config File
     #[arg(long)]
     load: bool,
+    /// Config File Path
+    #[arg(long, value_name = "config_path", value_parser)]
+    config: Option<PathBuf>,
     /// Additional arguments
     #[arg(value_name = "arguments")]
     argument: Vec<String>,
@@ -60,7 +64,7 @@ fn main() {
 
 fn run() -> Result<()> {
     let args = Args::parse();
-    let mut config = load_config()?;
+    let mut config = load_config(&args.config)?;
     config.set_limit(
         args.limit
             .unwrap_or(config.list.as_ref().map(|list| list.limit).unwrap_or(10)),
