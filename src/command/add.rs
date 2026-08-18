@@ -37,7 +37,7 @@ pub fn append_message(
 
     // Open: File
     let contents = fs::read_to_string(&file_path)
-        .with_context(|| format!("Failed to read file: {:?}", file_path))?;
+        .with_context(|| format!("Failed to Read file: {:?}", file_path))?;
     let mut lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
     // Format: Tags
     let tags = if let Some(tags) = &command.tags {
@@ -102,43 +102,23 @@ fn find_insert_index(lines: &[String], insert: &str, end_line: bool) -> Result<u
     let anchor = lines
         .iter()
         .rposition(|line| line.trim() == insert)
-        .ok_or_else(|| anyhow!("Not Found: Insert line: {:?}", insert))?;
+        .ok_or_else(|| anyhow!("Not Found: Insert line {:?}", insert))?;
+    println!("{}", anchor);
     if !end_line {
         return Ok(anchor + 1);
     }
     Ok(find_block_end(lines, anchor + 1))
 }
-/// `line`が見出しの行かどうかを判定する。
+/// Check: 見出しの行
 fn is_heading(line: &str) -> bool {
-    let line = line.trim_start();
-    line.starts_with('#')
+    line.trim_start().starts_with('#')
 }
-/// `line`が箇条書きの行かどうかを判定する。
-fn is_list_item(line: &str) -> bool {
-    let line = line.trim_start();
-    // 箇条書き
-    if matches!(line.as_bytes().first(), Some(b'-' | b'*' | b'+')) {
-        return line
-            .as_bytes()
-            .get(1)
-            .is_some_and(|c| c.is_ascii_whitespace());
-    }
-    // 番号付きリスト: 1. xxx / 10) xxx
-    let Some(separator) = line.find(['.', ')']) else {
-        return false;
-    };
-    separator > 0
-        && line[..separator].chars().all(|c| c.is_ascii_digit())
-        && line[separator + 1..]
-            .chars()
-            .next()
-            .is_some_and(|c| c.is_ascii_whitespace())
-}
-/// `line`が空行かどうかを判定する。
+/// Check: 空行
 fn is_blank(line: &str) -> bool {
     line.trim().is_empty()
 }
-/// `start`以降にある現在のブロックの終端を返す。
+
+// /// `start`以降にある現在のブロックの終端を返す。
 fn find_block_end(lines: &[String], start: usize) -> usize {
     let rest = &lines[start..];
     // 先に次の見出しを探す
@@ -176,4 +156,25 @@ fn find_block_end(lines: &[String], start: usize) -> usize {
         break;
     }
     index
+}
+/// `line`が箇条書きの行かどうかを判定する。
+fn is_list_item(line: &str) -> bool {
+    let line = line.trim_start();
+    // 箇条書き
+    if matches!(line.as_bytes().first(), Some(b'-' | b'*' | b'+')) {
+        return line
+            .as_bytes()
+            .get(1)
+            .is_some_and(|c| c.is_ascii_whitespace());
+    }
+    // 番号付きリスト: 1. xxx / 10) xxx
+    let Some(separator) = line.find(['.', ')']) else {
+        return false;
+    };
+    separator > 0
+        && line[..separator].chars().all(|c| c.is_ascii_digit())
+        && line[separator + 1..]
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_whitespace())
 }
