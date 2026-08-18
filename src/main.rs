@@ -1,5 +1,4 @@
 mod config;
-use anyhow::Context;
 use config::Config;
 use config::load_config;
 mod command;
@@ -9,7 +8,7 @@ use command::list::list_entries;
 mod tool;
 mod utils;
 
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 
 #[derive(Parser, Debug)]
