@@ -132,6 +132,12 @@ qwa --command <command> <command> ...
 ```
 指定したコマンドを詳細表示する。
 
+### `--config`
+```bash
+qwa --config <config path>
+```
+読み込む設定ファイルを指定する。
+
 ### `--load`
 ```bash
 qwa --load
@@ -152,7 +158,7 @@ qwa --version
 
 ## ⚙ 設定ファイル ⚙
 **注意事項**
-- `~/.config/qwato/config.toml`、`./qwato.toml`の順に読み込む。
+- `~/.config/qwato/config.toml`、`./qwato.toml`、指定した設定ファイルの順に読み込む。
 - Rustの[chrono](https://docs.rs/chrono)で日付を扱う。
 
 ### デフォルト設定
