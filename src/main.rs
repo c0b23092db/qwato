@@ -26,8 +26,8 @@ struct Args {
     #[arg(short, long)]
     checkbox: bool,
     /// Tags for the message
-    #[arg(long)]
-    tag: Option<String>,
+    #[arg(long, value_delimiter = ',')]
+    tag: Vec<String>,
     /// List all commands
     #[arg(short, long)]
     list: bool,
@@ -78,13 +78,7 @@ fn run() -> Result<()> {
         _ => {
             // args if args.add || args.checkbox (Add,Checkbox)
             let (command, message) = check_argument_count(&config, &args.argument)?;
-            append_message(
-                &config,
-                &command,
-                &message,
-                args.tag.as_deref(),
-                args.checkbox,
-            )
+            append_message(&config, &command, &message, &args.tag, args.checkbox)
         }
     }
 }

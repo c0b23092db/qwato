@@ -1,7 +1,6 @@
 use crate::config::Config;
 use crate::tool::create::create_file_if_not_exists;
 use crate::tool::markdown::{is_blank, is_heading, is_list};
-use crate::tool::tag::parse_tags;
 use crate::utils::{
     check_command_exists, conversion_target_file_path, expand_home, update_frontmatter_field,
 };
@@ -15,7 +14,7 @@ pub fn append_message(
     config: &Config,
     command_name: &str,
     message: &str,
-    clap_tag: Option<&str>,
+    clap_tag: &[String],
     is_checkbox: bool,
 ) -> Result<()> {
     let command = check_command_exists(config, command_name)?;
@@ -44,11 +43,7 @@ pub fn append_message(
     let mut lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
     // Format: Tags //
     let mut tags = command.tags.unwrap_or_default();
-    if let Some(clap_tag) = clap_tag
-        && let Some(parsed_tags) = parse_tags(clap_tag)
-    {
-        tags.extend(parsed_tags);
-    }
+    tags.extend(clap_tag.iter().cloned());
     let tags = if tags.is_empty() {
         String::new()
     } else {
