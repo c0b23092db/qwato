@@ -10,14 +10,14 @@ pub fn is_blank(line: &str) -> bool {
 pub fn is_list(line: &str) -> bool {
     let line = line.trim_start();
     // 箇条書き
-    if matches!(line.as_bytes().first(), Some(b'-' | b'*' | b'+')) {
+    if matches!(line.as_bytes().first(), Some(b'-' | b'*')) {
         return line
             .as_bytes()
             .get(1)
             .is_some_and(|c| c.is_ascii_whitespace());
     }
-    // 番号付きリスト: 1. xxx / 10) xxx
-    let Some(separator) = line.find(['.', ')']) else {
+    // 番号付きリスト
+    let Some(separator) = line.find('.') else {
         return false;
     };
     separator > 0
