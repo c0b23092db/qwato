@@ -25,7 +25,10 @@ struct Args {
     add: bool,
     /// Add a new checkbox
     #[arg(short, long)]
-    check: bool,
+    checkbox: bool,
+    /// Tags for the message
+    #[arg(long)]
+    tag: Option<String>,
     /// List all commands
     #[arg(short, long)]
     list: bool,
@@ -74,9 +77,15 @@ fn run() -> Result<()> {
             list_entries(&config, &args.argument, args.note, args.task)
         }
         _ => {
-            // args if args.add || args.check (Add,Check)
+            // args if args.add || args.checkbox (Add,Checkbox)
             let (command, message) = check_argument_count(&config, &args.argument)?;
-            append_message(&config, &command, &message, args.check)
+            append_message(
+                &config,
+                &command,
+                &message,
+                args.tag.as_deref(),
+                args.checkbox,
+            )
         }
     }
 }

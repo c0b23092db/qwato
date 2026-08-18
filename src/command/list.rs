@@ -1,4 +1,5 @@
 use crate::config::{CommandConfig, Config};
+use crate::tool::markdown::{is_blank, is_heading, is_list};
 use crate::utils::{check_command_exists, conversion_target_directory_path};
 use anyhow::{Context, Result};
 use chrono::{NaiveDate, NaiveTime};
@@ -8,9 +9,6 @@ use std::cmp::Reverse;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
-use crate::tool::markdown::{
-    is_heading,is_blank,is_list
-};
 
 #[derive(Debug)]
 struct DataLog {

@@ -77,10 +77,10 @@ qwa --add <command> <message> <message> ...
 ```
 指定したファイルにメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
-### `--check`
+### `--checkbox`
 ```bash
-qwa --check <message>
-qwa --check <command> <message> <message> ...
+qwa --checkbox <message>
+qwa --checkbox <command> <message> <message> ...
 ```
 指定したファイルにチェックボックス付きでメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
@@ -110,6 +110,17 @@ qwa --task
 qwa --task <command> <command> ...
 ```
 コマンドで指定しているディレクトリのファイル群を参照し、チェックボックスを表示する。
+
+### `--tag`
+```bash
+qwa --tag <tag>
+```
+`tag1,tag2,tag3`のようにカンマ区切りで指定する。
+```bash
+qwa --add <message> --tag <tag>
+qwa --checkbox <message> --tag <tag>
+```
+コマンドで登録したタグと一緒に指定したタグを付与する。
 
 ### `--command`
 ```bash
