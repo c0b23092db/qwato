@@ -75,7 +75,6 @@ pub fn conversion_target_directory_path(
 }
 
 /// Update: YAML frontmatterが存在する場合だけ、指定フィールドを更新する。
-///
 /// - Frontmatterがない場合: 何もしない
 /// - Frontmatterはあるがフィールドがない場合: エラー
 pub fn update_frontmatter_field(

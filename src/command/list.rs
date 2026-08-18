@@ -8,6 +8,9 @@ use std::cmp::Reverse;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
+use crate::tool::markdown::{
+    is_heading,is_blank,is_list
+};
 
 #[derive(Debug)]
 struct DataLog {
@@ -106,6 +109,7 @@ pub fn list_entries(
             let mut current_index: Option<usize> = None;
             for line in contents.lines() {
                 let trimmed = line.trim();
+                // Skip: Frontmatter and Code Block
                 if trimmed == "---" {
                     in_frontmatter = !in_frontmatter;
                     in_code_block = false;
@@ -115,7 +119,7 @@ pub fn list_entries(
                 if in_frontmatter {
                     continue;
                 }
-                if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+                if trimmed.starts_with("```") {
                     in_code_block = !in_code_block;
                     current_index = None;
                     continue;
@@ -123,15 +127,11 @@ pub fn list_entries(
                 if in_code_block {
                     continue;
                 }
-                if trimmed.is_empty() {
+                if is_blank(trimmed) || is_heading(trimmed) || trimmed.starts_with('>') {
                     current_index = None;
                     continue;
                 }
-                if trimmed.starts_with('#') || trimmed.starts_with('>') {
-                    current_index = None;
-                    continue;
-                }
-                if is_list_line(trimmed) {
+                if is_list(trimmed) {
                     current_index = None;
                 }
                 if data_log.push(line, is_note, is_task) {
@@ -218,27 +218,6 @@ fn resolve_date_stamp(file_path: &Path, command: &CommandConfig) -> Result<Strin
         "Failed to resolve date stamp: {:?}",
         file_path
     ))
-}
-
-fn is_list_line(line: &str) -> bool {
-    let line = line.trim_start();
-    if matches!(line.as_bytes().first(), Some(b'-' | b'*' | b'+')) {
-        return line
-            .as_bytes()
-            .get(1)
-            .is_some_and(|c| c.is_ascii_whitespace());
-    }
-
-    let Some(separator) = line.find(['.', ')']) else {
-        return false;
-    };
-
-    separator > 0
-        && line[..separator].chars().all(|c| c.is_ascii_digit())
-        && line[separator + 1..]
-            .chars()
-            .next()
-            .is_some_and(|c| c.is_ascii_whitespace())
 }
 
 /// Print: メッセージを表示

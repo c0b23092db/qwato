@@ -1,7 +1,10 @@
 use crate::config::Config;
-use crate::tool::create_file_if_not_exists;
 use crate::utils::{
     check_command_exists, conversion_target_file_path, expand_home, update_frontmatter_field,
+};
+use crate::tool::create::create_file_if_not_exists;
+use crate::tool::markdown::{
+    is_heading,is_blank,is_list
 };
 
 use anyhow::{Context, Result, anyhow};
@@ -109,16 +112,8 @@ fn find_insert_index(lines: &[String], insert: &str, end_line: bool) -> Result<u
     }
     Ok(find_block_end(lines, anchor + 1))
 }
-/// Check: 見出しの行
-fn is_heading(line: &str) -> bool {
-    line.trim_start().starts_with('#')
-}
-/// Check: 空行
-fn is_blank(line: &str) -> bool {
-    line.trim().is_empty()
-}
 
-// /// `start`以降にある現在のブロックの終端を返す。
+/// `start`以降にある現在のブロックの終端を返す。
 fn find_block_end(lines: &[String], start: usize) -> usize {
     let rest = &lines[start..];
     // 先に次の見出しを探す
@@ -134,20 +129,20 @@ fn find_block_end(lines: &[String], start: usize) -> usize {
     };
     let first_content = start + first_content;
     // `insert`の直後がリストでなければ、次の見出しまでをセクションとみなす
-    if !is_list_item(&lines[first_content]) {
+    if !is_list(&lines[first_content]) {
         return next_heading;
     }
     // リストブロックの終端を探す
     let mut index = first_content;
     while index < next_heading {
         let line = &lines[index];
-        if is_list_item(line) {
+        if is_list(line) {
             index += 1;
             continue;
         }
         if is_blank(line) {
             // 空行の後にリストが続くならリストの一部とみなす
-            let next_is_list = lines.get(index + 1).is_some_and(|next| is_list_item(next));
+            let next_is_list = lines.get(index + 1).is_some_and(|next| is_list(next));
             if next_is_list {
                 index += 1;
                 continue;
@@ -156,25 +151,4 @@ fn find_block_end(lines: &[String], start: usize) -> usize {
         break;
     }
     index
-}
-/// `line`が箇条書きの行かどうかを判定する。
-fn is_list_item(line: &str) -> bool {
-    let line = line.trim_start();
-    // 箇条書き
-    if matches!(line.as_bytes().first(), Some(b'-' | b'*' | b'+')) {
-        return line
-            .as_bytes()
-            .get(1)
-            .is_some_and(|c| c.is_ascii_whitespace());
-    }
-    // 番号付きリスト: 1. xxx / 10) xxx
-    let Some(separator) = line.find(['.', ')']) else {
-        return false;
-    };
-    separator > 0
-        && line[..separator].chars().all(|c| c.is_ascii_digit())
-        && line[separator + 1..]
-            .chars()
-            .next()
-            .is_some_and(|c| c.is_ascii_whitespace())
 }
