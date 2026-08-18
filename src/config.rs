@@ -78,11 +78,7 @@ impl Config {
     fn new() -> Self {
         Self {
             no_global: false,
-            base_directory: Some(
-                home_dir()
-                    .unwrap_or(PathBuf::from("~"))
-                    .join("Documents/Qwato"),
-            ),
+            base_directory: Some(home_dir().unwrap_or(PathBuf::from("~"))),
             default_command: None,
             auto_command: false,
             list: Some(ListConfig { limit: 10 }),
