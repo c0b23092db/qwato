@@ -17,10 +17,14 @@ struct DataLog {
     messages: Vec<MessageLog>,
 }
 impl DataLog {
-    fn new(date_stamp: String) -> Self {
+    fn new(date_stamp: String, all: bool) -> Self {
         Self {
-            re: Regex::new(r"^\s*(?:[-*+]\s|\d+[.)]\s)(?:\[(.)\]\s*)?(\d{2}:\d{2}:\d{2})\s+(.*)$")
-                .unwrap(),
+            re: Regex::new(if all {
+                r"^\s*(?:[-]\s|\d+[.]\s)(?:\[(.)\]\s*)?(?:(\d{2}:\d{2}:\d{2})\s+)?(.*)$"
+            } else {
+                r"^\s*(?:[-]\s|\d+[.]\s)(?:\[(.)\]\s*)?(\d{2}:\d{2}:\d{2})\s+(.*)$"
+            })
+            .unwrap(),
             date_stamp,
             messages: Vec::new(),
         }
@@ -41,11 +45,10 @@ impl DataLog {
         }
         let timestamp = captures
             .get(2)
-            .and_then(|m| m.as_str().parse::<NaiveTime>().ok())
-            .unwrap_or_else(|| NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+            .and_then(|m| m.as_str().parse::<NaiveTime>().ok());
         let message = captures.get(3).map_or("", |m| m.as_str()).to_string();
         self.messages.push(MessageLog {
-            timestamp: Some(timestamp),
+            timestamp,
             kind: if entry_is_task {
                 EntryKind::Task { checked }
             } else {
@@ -76,6 +79,7 @@ pub fn list_entries(
     command_names: &[String],
     is_note: bool,
     is_task: bool,
+    all: bool,
 ) -> Result<()> {
     let mut targets = command_names.to_vec();
     if targets.is_empty() {
@@ -94,6 +98,7 @@ pub fn list_entries(
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .filter(|path| path.is_file())
+            .filter(|path| is_command_file(path, &command))
             .collect::<Vec<_>>();
         for file_path in paths {
             let contents = fs::read_to_string(&file_path)
@@ -101,7 +106,7 @@ pub fn list_entries(
             let date_stamp = resolve_date_stamp(&file_path, &command)?;
             let data_log = entries
                 .entry(date_stamp.clone())
-                .or_insert_with(|| DataLog::new(date_stamp));
+                .or_insert_with(|| DataLog::new(date_stamp, all));
             let mut in_frontmatter = false;
             let mut in_code_block = false;
             let mut current_index: Option<usize> = None;
@@ -184,6 +189,19 @@ pub fn list_entries(
     }
 
     Ok(())
+}
+
+/// Check: コマンドのファイル名
+fn is_command_file(file_path: &Path, command: &CommandConfig) -> bool {
+    let Some(pattern) = command.file.as_deref() else {
+        return true;
+    };
+    let Some(file_name) = file_path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    let pattern = pattern.to_string_lossy();
+    file_name == pattern
+        || NaiveDate::parse_from_str(file_name, &pattern).is_ok()
 }
 
 /// Resolve: ファイル名から日付を取得する

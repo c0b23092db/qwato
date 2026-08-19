@@ -49,6 +49,7 @@ Options:
   -l, --list           List all commands
   -n, --note           List all notes
   -t, --task           List all tasks
+      --all            List all messages, including messages without a time format
       --limit <LIMIT>  Show the limit of list messages
       --command        Check to Use Command
       --load           Check to Load Config File
@@ -96,6 +97,12 @@ qwa --list <command> <command> ...
 qwa --list --limit 10
 ```
 表示する数を指定する。
+
+#### `--all`
+```bash
+qwa --list --all
+```
+時刻フォーマットのない項目も含め指定した数を表示する。
 
 ### `--note`
 ```bash
