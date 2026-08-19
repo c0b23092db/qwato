@@ -4,7 +4,7 @@ use config::load_config;
 mod command;
 use command::add::append_message;
 use command::command::format_command_list;
-use command::list::{list_entries, mark_task_done};
+use command::list::list_entries;
 mod tool;
 mod utils;
 
@@ -35,11 +35,11 @@ struct Args {
     /// List all tasks
     #[arg(short, long)]
     task: bool,
-    /// Mark a task as done (by index)
-    #[arg(short, long)]
-    done: Option<usize>,
+    /// List all messages, including messages without a time format
+    #[arg(long)]
+    all: bool,
     /// Tags for the message
-    #[arg(long, alias = "tags", value_delimiter = ',', num_args = 1..)]
+    #[arg(long, value_delimiter = ',', num_args = 1..)]
     tag: Vec<String>,
     /// Show the limit of list messages
     #[arg(long)]
@@ -77,15 +77,9 @@ fn run() -> Result<()> {
             println!("{:#?}", config);
             Ok(())
         }
-        args if args.done.is_some() => {
-            let index = args.done.unwrap();
-            mark_task_done(&config, &args.argument, index, &args.tag)
-        }
         args if args.command => format_command_list(&config, &args.argument),
-        args if args.list => list_entries(&config, &args.argument, false, false, &args.tag),
-        args if args.note || args.task => {
-            list_entries(&config, &args.argument, args.note, args.task, &args.tag)
-        }
+        args if args.list || args.all => list_entries(&config, &args.argument, &args.tag, false, false, args.all),
+        args if args.note || args.task => list_entries(&config, &args.argument, &args.tag, args.note, args.task, false),
         _ => {
             // args if args.add || args.checkbox (Add,Checkbox)
             let (command, message) = check_argument_count(&config, &args.argument)?;
