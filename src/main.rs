@@ -35,6 +35,9 @@ struct Args {
     /// List all tasks
     #[arg(short, long)]
     task: bool,
+    /// List all messages, including messages without a time format
+    #[arg(long)]
+    all: bool,
     /// Tags for the message
     #[arg(long, value_delimiter = ',', num_args = 1..)]
     tag: Vec<String>,
@@ -75,10 +78,8 @@ fn run() -> Result<()> {
             Ok(())
         }
         args if args.command => format_command_list(&config, &args.argument),
-        args if args.list => list_entries(&config, &args.argument, false, false),
-        args if args.note || args.task => {
-            list_entries(&config, &args.argument, args.note, args.task)
-        }
+        args if args.list || args.all => list_entries(&config, &args.argument, &args.tag, false, false, args.all),
+        args if args.note || args.task => list_entries(&config, &args.argument, &args.tag, args.note, args.task, false),
         _ => {
             // args if args.add || args.checkbox (Add,Checkbox)
             let (command, message) = check_argument_count(&config, &args.argument)?;

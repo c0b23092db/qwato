@@ -6,7 +6,7 @@ use chrono::{NaiveDate, NaiveTime};
 use colored::*;
 use regex::Regex;
 use std::cmp::Reverse;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -17,10 +17,14 @@ struct DataLog {
     messages: Vec<MessageLog>,
 }
 impl DataLog {
-    fn new(date_stamp: String) -> Self {
+    fn new(date_stamp: String, is_all: bool) -> Self {
         Self {
-            re: Regex::new(r"^\s*(?:[-*+]\s|\d+[.)]\s)(?:\[(.)\]\s*)?(\d{2}:\d{2}:\d{2})\s+(.*)$")
-                .unwrap(),
+            re: Regex::new(if is_all {
+                r"^\s*(?:[-]\s|\d+[.]\s)(?:\[(.)\]\s*)?(?:(\d{2}:\d{2}:\d{2})\s+)?(.*)$"
+            } else {
+                r"^\s*(?:[-]\s|\d+[.]\s)(?:\[(.)\]\s*)?(\d{2}:\d{2}:\d{2})\s+(.*)$"
+            })
+            .unwrap(),
             date_stamp,
             messages: Vec::new(),
         }
@@ -41,11 +45,10 @@ impl DataLog {
         }
         let timestamp = captures
             .get(2)
-            .and_then(|m| m.as_str().parse::<NaiveTime>().ok())
-            .unwrap_or_else(|| NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+            .and_then(|m| m.as_str().parse::<NaiveTime>().ok());
         let message = captures.get(3).map_or("", |m| m.as_str()).to_string();
         self.messages.push(MessageLog {
-            timestamp: Some(timestamp),
+            timestamp,
             kind: if entry_is_task {
                 EntryKind::Task { checked }
             } else {
@@ -74,8 +77,10 @@ enum EntryKind {
 pub fn list_entries(
     config: &Config,
     command_names: &[String],
+    tag_filters: &[String],
     is_note: bool,
     is_task: bool,
+    is_all: bool,
 ) -> Result<()> {
     let mut targets = command_names.to_vec();
     if targets.is_empty() {
@@ -86,22 +91,32 @@ pub fn list_entries(
                 .with_context(|| "Not Setting: default command")?,
         );
     }
+    let limit = config.list.as_ref().map(|list| list.limit).unwrap_or(10);
     let mut entries: BTreeMap<String, DataLog> = BTreeMap::new();
+
+    // Create: DataLog
+    let mut count = 0usize;
     for command_name in targets {
         let command = check_command_exists(config, &command_name)?;
-        let paths = fs::read_dir(conversion_target_directory_path(config, &command)?)
+        let mut paths = fs::read_dir(conversion_target_directory_path(config, &command)?)
             .with_context(|| format!("Failed to read directory: {:?}", command.directory))?
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .filter(|path| path.is_file())
+            .filter(|path| is_command_file(path, &command))
             .collect::<Vec<_>>();
+        paths.reverse();
         for file_path in paths {
+            println!("Reading file: {:?}", file_path);
+            if limit <= count {
+                break
+            }
             let contents = fs::read_to_string(&file_path)
                 .with_context(|| format!("Failed to read file: {:?}", file_path))?;
             let date_stamp = resolve_date_stamp(&file_path, &command)?;
             let data_log = entries
                 .entry(date_stamp.clone())
-                .or_insert_with(|| DataLog::new(date_stamp));
+                .or_insert_with(|| DataLog::new(date_stamp, is_all));
             let mut in_frontmatter = false;
             let mut in_code_block = false;
             let mut current_index: Option<usize> = None;
@@ -134,6 +149,7 @@ pub fn list_entries(
                 }
                 if data_log.push(line, is_note, is_task) {
                     current_index = Some(data_log.messages.len() - 1);
+                    count += 1;
                     continue;
                 }
                 if let Some(index) = current_index {
@@ -145,9 +161,19 @@ pub fn list_entries(
         }
     }
 
+    // Sort: 日付順
     let mut sorted_entries: Vec<DataLog> = entries
         .into_values()
         .map(|mut data_log| {
+            data_log
+                .messages
+                .retain(|entry| {
+                    matches!(entry.kind, EntryKind::Memo) ||
+                        matches!(entry.kind, EntryKind::Task { checked: false })
+                });
+            data_log
+                .messages
+                .retain(|entry| message_matches_tags(&entry.message, tag_filters));
             data_log
                 .messages
                 .sort_by_key(|entry| Reverse(entry.timestamp.unwrap_or(NaiveTime::MIN)));
@@ -157,7 +183,6 @@ pub fn list_entries(
     sorted_entries.sort_by(|left, right| right.date_stamp.cmp(&left.date_stamp));
 
     let mut printed = 0usize;
-    let limit = config.list.as_ref().map(|list| list.limit).unwrap_or(10);
     for data_log in sorted_entries {
         if printed >= limit {
             return Ok(());
@@ -184,6 +209,42 @@ pub fn list_entries(
     }
 
     Ok(())
+}
+
+/// Check: コマンドのファイル名
+fn is_command_file(file_path: &Path, command: &CommandConfig) -> bool {
+    let Some(pattern) = command.file.as_deref() else {
+        return true;
+    };
+    let Some(file_name) = file_path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    let pattern = pattern.to_string_lossy();
+    file_name == pattern
+        || NaiveDate::parse_from_str(file_name, &pattern).is_ok()
+}
+
+/// Check: Tag
+fn message_matches_tags(message: &str, tag_filters: &[String]) -> bool {
+    if tag_filters.is_empty() {
+        return true;
+    }
+    let mut tags = HashSet::new();
+    for token in message.split_whitespace() {
+        let tag = token.strip_prefix('#').unwrap_or(token).trim();
+        if !tag.is_empty() {
+            tags.insert(normalize_tag(tag));
+        }
+    }
+    tag_filters
+        .iter()
+        .map(|tag| normalize_tag(tag))
+        .any(|tag| tags.contains(&tag))
+}
+
+/// Normalize: Tag
+fn normalize_tag(tag: &str) -> String {
+    tag.trim().trim_matches('#').trim().to_ascii_lowercase()
 }
 
 /// Resolve: ファイル名から日付を取得する

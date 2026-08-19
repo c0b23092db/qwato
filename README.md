@@ -65,6 +65,7 @@ Options:
   -l, --list           List all commands
   -n, --note           List all notes
   -t, --task           List all tasks
+      --all            List all messages, including messages without a time format
       --limit <LIMIT>  Show the limit of list messages
       --load           Check to Load Config File
   -h, --help           Print help
@@ -127,6 +128,14 @@ qwa --list --limit 10
 ```
 
 Specifies the number of items to display.
+
+### `--all`
+
+```bash
+qwa --all
+```
+
+Displays items including those without a time format.
 
 ### `--load`
 

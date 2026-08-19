@@ -44,16 +44,19 @@ Arguments:
   [arguments]...  Additional arguments
 
 Options:
-  -a, --add            Add a new message
-  -c, --check          Add a new checkbox
-  -l, --list           List all commands
-  -n, --note           List all notes
-  -t, --task           List all tasks
-      --limit <LIMIT>  Show the limit of list messages
-      --command        Check to Use Command
-      --load           Check to Load Config File
-  -h, --help           Print help
-  -V, --version        Print version
+  -a, --add                   Add a new message
+  -c, --checkbox              Add a new checkbox
+  -l, --list                  List all commands
+  -n, --note                  List all notes
+  -t, --task                  List all tasks
+      --all                   List all messages, including messages without a time format
+      --tag <TAG>...          Tags for the message
+      --limit <LIMIT>         Show the limit of list messages
+      --command               Check to Use Command
+      --load                  Check to Load Config File
+      --config <config_path>  Config File Path
+  -h, --help                  Print help
+  -V, --version               Print version
 ```
 
 ### 引数指定の考え方
@@ -96,6 +99,12 @@ qwa --list <command> <command> ...
 qwa --list --limit 10
 ```
 表示する数を指定する。
+
+#### `--all`
+```bash
+qwa --list --all
+```
+時刻フォーマットのない項目も含め指定した数を表示する。
 
 ### `--note`
 ```bash
