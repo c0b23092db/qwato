@@ -1,0 +1,32 @@
+base_directory = "./tests/output"
+time_format = "%H:%M:%S"
+
+[created]
+field = "Created"
+format = "%Y-%m-%d %H:%M:%S"
+
+[modified]
+field = "Modified"
+format = "%Y-%m-%d %H:%M:%S"
+
+[command.auto_create_false]
+auto_create = false
+file = "auto_create.md"
+
+[command.no_template]
+auto_create = true
+template = "../template/no_template.md"
+directory = "non"
+file = "no_template.md"
+
+[command.not_created]
+auto_create = true
+template = "../template/not_yaml.md"
+directory = "non"
+file = "not_created.md"
+
+[command.not_modified]
+auto_create = true
+template = "../template/not_yaml.md"
+directory = "../template"
+file = "not_yaml.md"

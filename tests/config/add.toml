@@ -1,0 +1,87 @@
+base_directory = "./tests/output"
+default_command = "add_single"
+time_format = "%H:%M:%S"
+
+[created]
+field = "Created"
+format = "%Y-%m-%d %H:%M:%S"
+
+[modified]
+field = "Modified"
+format = "%Y-%m-%d %H:%M:%S"
+
+[command.single_add]
+auto_create = true
+directory = "add"
+file = "single_add.md"
+
+[command.single_add_not_format]
+auto_create = true
+directory = "add"
+file = "single_add_not_format.md"
+not_format = true
+
+[command.add_tag]
+auto_create = true
+directory = "add"
+file = "add_tag.md"
+not_format = true
+
+[command.add_format_tag]
+auto_create = true
+directory = "add"
+file = "add_format_tag.md"
+
+[command.add_config_tag]
+auto_create = true
+directory = "add"
+tags = ["config", "tag"]
+file = "add_config_tag.md"
+not_format = true
+
+[command.add_end_line_true]
+auto_create = true
+directory = "add"
+file = "add_end_line.md"
+end_line = true
+not_format = true
+
+[command.add_end_line_false]
+auto_create = true
+directory = "add"
+file = "add_end_line.md"
+end_line = false
+not_format = true
+
+[command.add_some_insert]
+auto_create = true
+template = "../template/message.md"
+directory = "add"
+file = "add_some_insert.md"
+insert = "## Add"
+not_format = true
+end_line = true
+
+[command.add_insert_end_line_true]
+auto_create = true
+template = "../template/insert.md"
+directory = "add"
+file = "add_insert_end_line.md"
+insert = "## Add"
+not_format = true
+end_line = true
+
+[command.add_insert_end_line_false]
+auto_create = true
+template = "../template/insert.md"
+directory = "add"
+file = "add_insert_end_line.md"
+insert = "## Add"
+not_format = true
+end_line = false
+
+[command.add_yaml]
+auto_create = true
+template = "../template/yaml.md"
+directory = "add"
+file = "add_yaml.md"

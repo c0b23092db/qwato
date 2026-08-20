@@ -88,35 +88,40 @@ pub fn list_entries(
             config
                 .default_command
                 .clone()
-                .with_context(|| "Not Setting: default command")?,
+                .expect("Not Setting: default command"),
         );
     }
     let limit = config.list.as_ref().map(|list| list.limit).unwrap_or(10);
+    if limit == 0 {
+        return Ok(());
+    }
     let mut entries: BTreeMap<String, DataLog> = BTreeMap::new();
 
     // Create: DataLog
-    let mut count = 0usize;
+    let mut files = Vec::new();
     for command_name in targets {
         let command = check_command_exists(config, &command_name)?;
-        let mut paths = fs::read_dir(conversion_target_directory_path(config, &command)?)
-            .with_context(|| format!("Failed to read directory: {:?}", command.directory))?
+        let paths = fs::read_dir(conversion_target_directory_path(config, &command)?)
+            .with_context(|| format!("Failed to Read Directory: {:?}", command.directory))?
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .filter(|path| path.is_file())
             .filter(|path| is_command_file(path, &command))
-            .collect::<Vec<_>>();
-        paths.reverse();
-        for file_path in paths {
-            println!("Reading file: {:?}", file_path);
-            if limit <= count {
-                break
-            }
-            let contents = fs::read_to_string(&file_path)
-                .with_context(|| format!("Failed to read file: {:?}", file_path))?;
-            let date_stamp = resolve_date_stamp(&file_path, &command)?;
+            .map(|file_path| {
+                let date_stamp = resolve_date_stamp(&file_path, &command)?;
+                Ok((date_stamp, file_path))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        files.extend(paths);
+    }
+    files.sort_by(|left, right| right.0.cmp(&left.0));
+
+    for (file_index, (date_stamp, file_path)) in files.iter().enumerate() {
+        let contents = fs::read_to_string(file_path)
+            .with_context(|| format!("Failed to Read: {}", file_path.display()))?;
             let data_log = entries
                 .entry(date_stamp.clone())
-                .or_insert_with(|| DataLog::new(date_stamp, is_all));
+                .or_insert_with(|| DataLog::new(date_stamp.clone(), is_all));
             let mut in_frontmatter = false;
             let mut in_code_block = false;
             let mut current_index: Option<usize> = None;
@@ -149,7 +154,6 @@ pub fn list_entries(
                 }
                 if data_log.push(line, is_note, is_task) {
                     current_index = Some(data_log.messages.len() - 1);
-                    count += 1;
                     continue;
                 }
                 if let Some(index) = current_index {
@@ -158,6 +162,12 @@ pub fn list_entries(
                     current_message.push_str(trimmed);
                 }
             }
+
+        let next_date = files.get(file_index + 1).map(|file| file.0.as_str());
+        if next_date != Some(date_stamp.as_str())
+            && reached_limit(&entries, tag_filters, is_note, is_task, limit)
+        {
+            break;
         }
     }
 
@@ -165,12 +175,10 @@ pub fn list_entries(
     let mut sorted_entries: Vec<DataLog> = entries
         .into_values()
         .map(|mut data_log| {
-            data_log
-                .messages
-                .retain(|entry| {
-                    matches!(entry.kind, EntryKind::Memo) ||
-                        matches!(entry.kind, EntryKind::Task { checked: false })
-                });
+            data_log.messages.retain(|entry| {
+                matches!(entry.kind, EntryKind::Memo)
+                    || matches!(entry.kind, EntryKind::Task { checked: false })
+            });
             data_log
                 .messages
                 .retain(|entry| message_matches_tags(&entry.message, tag_filters));
@@ -220,8 +228,7 @@ fn is_command_file(file_path: &Path, command: &CommandConfig) -> bool {
         return false;
     };
     let pattern = pattern.to_string_lossy();
-    file_name == pattern
-        || NaiveDate::parse_from_str(file_name, &pattern).is_ok()
+    file_name == pattern || NaiveDate::parse_from_str(file_name, &pattern).is_ok()
 }
 
 /// Check: Tag
@@ -240,6 +247,32 @@ fn message_matches_tags(message: &str, tag_filters: &[String]) -> bool {
         .iter()
         .map(|tag| normalize_tag(tag))
         .any(|tag| tags.contains(&tag))
+}
+
+/// Check: 表示対象数が上限に達したか
+fn reached_limit(
+    entries: &BTreeMap<String, DataLog>,
+    tag_filters: &[String],
+    is_note: bool,
+    is_task: bool,
+    limit: usize,
+) -> bool {
+    entries
+        .values()
+        .flat_map(|data_log| data_log.messages.iter())
+        .filter(|entry| {
+            (is_note && !is_task && matches!(entry.kind, EntryKind::Memo))
+                || (is_task
+                    && !is_note
+                    && matches!(entry.kind, EntryKind::Task { checked: false }))
+                || (!is_note
+                    && !is_task
+                    && (matches!(entry.kind, EntryKind::Memo)
+                        || matches!(entry.kind, EntryKind::Task { checked: false })))
+        })
+        .filter(|entry| message_matches_tags(&entry.message, tag_filters))
+        .count()
+        >= limit
 }
 
 /// Normalize: Tag
@@ -262,7 +295,7 @@ fn resolve_date_stamp(file_path: &Path, command: &CommandConfig) -> Result<Strin
     }
 
     let metadata = fs::metadata(file_path)
-        .with_context(|| format!("Failed to read metadata: {:?}", file_path))?;
+        .with_context(|| format!("Failed to Read Metadata: {}", file_path.display()))?;
 
     if let Ok(created) = metadata.created() {
         let datetime: chrono::DateTime<chrono::Local> = created.into();

@@ -1,6 +1,7 @@
 mod config;
 use config::Config;
 use config::load_config;
+#[warn(clippy::module_inception)]
 mod command;
 use command::add::append_message;
 use command::command::format_command_list;
@@ -47,12 +48,15 @@ struct Args {
     /// Check to Use Command
     #[arg(long)]
     command: bool,
-    /// Check to Load Config File
-    #[arg(long)]
-    load: bool,
     /// Config File Path
     #[arg(long, value_name = "config_path", value_parser)]
     config: Option<PathBuf>,
+    /// Debug: Show UTC Offset Time
+    #[arg(long)]
+    utc_offset_time: bool,
+    /// Debug: Show Load Config File
+    #[arg(long)]
+    colon_sharp_question: bool,
     /// Additional arguments
     #[arg(value_name = "arguments")]
     argument: Vec<String>,
@@ -73,17 +77,33 @@ fn run() -> Result<()> {
             .unwrap_or(config.list.as_ref().map(|list| list.limit).unwrap_or(10)),
     );
     match args {
-        args if args.load => {
+        args if args.colon_sharp_question => {
             println!("{:#?}", config);
             Ok(())
         }
         args if args.command => format_command_list(&config, &args.argument),
-        args if args.list || args.all => list_entries(&config, &args.argument, &args.tag, false, false, args.all),
-        args if args.note || args.task => list_entries(&config, &args.argument, &args.tag, args.note, args.task, false),
+        args if args.list || args.all => {
+            list_entries(&config, &args.argument, &args.tag, false, false, args.all)
+        }
+        args if args.note || args.task => list_entries(
+            &config,
+            &args.argument,
+            &args.tag,
+            args.note,
+            args.task,
+            false,
+        ),
         _ => {
             // args if args.add || args.checkbox (Add,Checkbox)
             let (command, message) = check_argument_count(&config, &args.argument)?;
-            append_message(&config, &command, &message, &args.tag, args.checkbox)
+            append_message(
+                &config,
+                &command,
+                &message,
+                &args.tag,
+                args.checkbox,
+                args.utc_offset_time,
+            )
         }
     }
 }

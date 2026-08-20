@@ -26,7 +26,7 @@ pub fn mark_task_done(
     };
 
     let mut lines: Vec<String> = fs::read_to_string(&task.file_path)
-        .with_context(|| format!("Failed to read file: {:?}", task.file_path))?
+        .with_context(|| format!("Failed to Read File: {:?}", task.file_path))?
         .lines()
         .map(std::string::ToString::to_string)
         .collect();
@@ -95,7 +95,8 @@ fn collect_task_entries(
                     continue;
                 }
 
-                let Some(captures) = DataLog::new(date_stamp.clone(),false).re.captures(line) else {
+                let Some(captures) = DataLog::new(date_stamp.clone(), false).re.captures(line)
+                else {
                     continue;
                 };
                 let checkbox = captures.get(1).map(|m| m.as_str());
@@ -140,7 +141,7 @@ impl TaskEntry {
             return false;
         };
 
-        let Some(captures) = DataLog::new(String::new(),false).re.captures(line) else {
+        let Some(captures) = DataLog::new(String::new(), false).re.captures(line) else {
             return false;
         };
         captures
@@ -218,7 +219,7 @@ mod tests {
 
     #[test]
     fn data_log_accepts_tasks_without_timestamps() {
-        let mut data_log = super::DataLog::new("2026-08-19".to_string(),false);
+        let mut data_log = super::DataLog::new("2026-08-19".to_string(), false);
 
         assert!(data_log.push("- [ ] Test3", false, true));
         assert_eq!(data_log.messages.len(), 1);

@@ -1,7 +1,8 @@
 use crate::config::{CommandConfig, Config};
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use dirs::home_dir;
+use std::fs::read_to_string;
 use std::path::PathBuf;
 
 /// Change: '~'をユーザーのホームディレクトリに変換
@@ -22,7 +23,7 @@ pub fn check_command_exists(config: &Config, command_name: &str) -> Result<Comma
     if let Some(command) = config.command.get(command_name) {
         Ok(command.clone())
     } else {
-        Err(anyhow!("unknown command {:?}", command_name))
+        Err(anyhow!("Unknown Command: {}", command_name))
     }
 }
 
@@ -97,7 +98,7 @@ pub fn update_frontmatter_field(
     let new_value = Local::now().format(format_pattern).to_string();
     for line in &mut lines[frontmatter_start + 1..frontmatter_end] {
         let trimmed = line.trim_start();
-        let Some((key, _old_value)) = trimmed.split_once(':') else {
+        let Some((key, _)) = trimmed.split_once(':') else {
             continue;
         };
         if key.trim() != field_name {
@@ -108,5 +109,10 @@ pub fn update_frontmatter_field(
         *line = format!("{indent}{field_name}: {new_value}");
         return Ok(());
     }
-    Err(anyhow!("Frontmatter field not found: {:?}", field_name))
+    Err(anyhow!("Failed to Found Frontmatter: {}", field_name))
+}
+
+/// Read: FileBuf -> String
+pub fn read_file_to_string(file_path: &PathBuf) -> Result<String> {
+    read_to_string(file_path).with_context(|| format!("Failed to Read: {}", file_path.display()))
 }

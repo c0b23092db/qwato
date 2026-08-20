@@ -3,21 +3,27 @@ English: [README.md](../README.md)
 ```bash
 qwa
 ```
-指定したファイルにメモを追加するコマンドラインツール
+**指定したファイルにメモを追加するコマンドラインツール**
+
+Obsidian QuickAdd Captureを使ってデイリーノートに書きこんでいる人向けです。わざわざObsidianを立ち上げずともターミナルからコマンドで書き込める利便性を味わってください。
 
 ## ⭐ 特徴 ⭐
-- ObsidianのQuickAddで登録できるCaptureを再現
-- ObsidianのThinoのようにタイムラインを表示
+- Obsidian QuickAdd Captureを再現した一行追記
+- ObsidianのThinoを再現したタイムライン表示
+- 一日一ページを基本とした日記ツール
 
 ## 💻 実行環境 💻
 ### OS
 #### 検証済
+- [x] Linux
 - [x] Windows 11
 #### 未検証
-- [ ] Linux
 - [ ] Mac
 
 ## 📦 インストール 📦
+### Binary
+#### Windows
+https://github.com/c0b23092db/qwato/releases/download/v0.2.0/qwa.exe
 ### cargo
 #### cargo install
 ```bash
@@ -53,8 +59,9 @@ Options:
       --tag <TAG>...          Tags for the message
       --limit <LIMIT>         Show the limit of list messages
       --command               Check to Use Command
-      --load                  Check to Load Config File
       --config <config_path>  Config File Path
+      --utc-offset-time       Debug: Show UTC Offset Time
+      --colon-sharp-question  Debug: Show Load Config File
   -h, --help                  Print help
   -V, --version               Print version
 ```
@@ -147,12 +154,6 @@ qwa --config <config path>
 ```
 読み込む設定ファイルを指定する。
 
-### `--load`
-```bash
-qwa --load
-```
-設定ファイルをRustの`"{:#?}"`の形式で表示する。
-
 ### `--help`
 ```bash
 qwa --help
@@ -164,6 +165,20 @@ qwa --help
 qwa --version
 ```
 コマンドのバージョンを表示する。
+
+### デバッグ出力用
+
+#### `--load`
+```bash
+qwa --load
+```
+設定ファイルを`"{:#?}"`の形式で表示する。
+
+#### `--time`
+```bash
+qwa --time
+```
+コマンドで取得した時間を返す。
 
 ## ⚙ 設定ファイル ⚙
 **注意事項**
@@ -194,9 +209,10 @@ not_format = false
 基準となるディレクトリ。
 ##### `default_command`
 コマンドの指定を行わない場合、デフォルトで使われるコマンドを指定する。
+設定しない場合、一番目の引数に必ずコマンドを要求する。
 ##### `no_global`
 trueの場合、グローバル読み込みの対象外になる。
-カレントディレクトリの設定ファイルは常に読み込まれる。
+優先度が一番に設定されている設定ファイルは常に読み込まれる。
 ##### `auto_command`
 trueの場合、強制的に`default_command`を実行するようにする。
 ##### `time_format`
@@ -287,10 +303,29 @@ end_line = false
 not_format = true
 ```
 
+#### コマンドを強制的に入れる場合
+```toml
+base_directory = "~/Documents/Obsidian"
+# default_command = "daily"
+```
+`default_command`を設定しない場合、コマンドを要求してきます。
+```
+> qwa デフォルトコマンドなし
+Not Config: defualt_command
+> qwa daily コマンドを使わせる
+```
+
+## 📰 今後 📰
+今後の開発は[開発案.md](./開発案.md)を確認してください。
+**Obsidianを使う制作者のために開発しているため、メンテナンスは消極的です**
+
 ## 💡 着想 💡
 - [Obsidian](https://obsidian.md/): 日記の継続
 - [QuickAdd](https://community.obsidian.md/plugins/quickadd): 簡易的なコマンド
 - [Thino](https://community.obsidian.md/plugins/obsidian-memos): リスト表示
+
+## 🔌 デバッグ 🔌
+- **Global Configは`no_global = true`で読み込み停止を行ってください**
 
 ## 📜 LICENSE 📜
 [Apache License Version 2.0](../LICENSE) / http://www.apache.org/licenses/LICENSE-2.0

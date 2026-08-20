@@ -2,10 +2,11 @@ use crate::config::Config;
 use crate::tool::create::create_file_if_not_exists;
 use crate::tool::markdown::{is_blank, is_heading, is_list};
 use crate::utils::{
-    check_command_exists, conversion_target_file_path, expand_home, update_frontmatter_field,
+    check_command_exists, conversion_target_file_path, expand_home, read_file_to_string,
+    update_frontmatter_field,
 };
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use chrono::Local;
 use std::fs;
 use std::path::PathBuf;
@@ -16,6 +17,7 @@ pub fn append_message(
     message: &str,
     clap_tag: &[String],
     is_checkbox: bool,
+    is_time: bool,
 ) -> Result<()> {
     let command = check_command_exists(config, command_name)?;
     let base_directory = expand_home(
@@ -26,6 +28,9 @@ pub fn append_message(
     )?;
     let file_path = conversion_target_file_path(config, command_name, &command)?;
     let now_time = Local::now();
+    if is_time {
+        println!("{}", now_time);
+    }
 
     // Create: Directory and file if they do not exist
     if command.auto_create {
@@ -38,8 +43,7 @@ pub fn append_message(
     }
 
     // Open: File //
-    let contents = fs::read_to_string(&file_path)
-        .with_context(|| format!("Failed to Read file: {:?}", file_path))?;
+    let contents = read_file_to_string(&file_path)?;
     let mut lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
     // Format: Tags //
     let mut tags = command.tags.unwrap_or_default();
@@ -58,10 +62,11 @@ pub fn append_message(
             .to_string()
             + " "
     };
+    // Format: Message //
     let in_message = if !is_checkbox {
-        format!("- {}{}{}", set_time, tags, message).to_string()
+        "- ".to_string() + &set_time + &tags + message
     } else {
-        format!("- [ ] {}{}{}", set_time, tags, message).to_string()
+        "- [ ] ".to_string() + &set_time + &tags + message
     };
     // Update: Modified Field //
     if let Some(modified_config) = &config.modified

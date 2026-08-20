@@ -1,0 +1,22 @@
+base_directory = "./tests/output"
+default_command = "single_checkbox"
+time_format = "%H:%M:%S"
+
+[created]
+field = "Created"
+format = "%Y-%m-%d %H:%M:%S"
+
+[modified]
+field = "Modified"
+format = "%Y-%m-%d %H:%M:%S"
+
+[command.single_checkbox]
+auto_create = true
+directory = "check"
+file = "single_checkbox.md"
+
+[command.single_checkbox_not_format]
+auto_create = true
+directory = "check"
+file = "single_checkbox_not_format.md"
+not_format = true

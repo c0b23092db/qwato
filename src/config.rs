@@ -124,8 +124,10 @@ impl Config {
 }
 
 pub fn load_config(config_path: &Option<PathBuf>) -> Result<Config> {
-    if let Some(config_path) = config_path && !config_path.exists() {
-        anyhow::bail!("Failed to Find: config file - {}", config_path.display())
+    if let Some(config_path) = config_path
+        && !config_path.exists()
+    {
+        anyhow::bail!("Failed to Find: {}", config_path.display())
     };
     let Ok(config_paths) = find_config_path(config_path) else {
         return Config::default();

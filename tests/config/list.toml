@@ -1,0 +1,9 @@
+base_directory = "./tests"
+default_command = "target"
+
+[list]
+limit = 10
+
+[command.target]
+directory = "target"
+file = "%Y-%m-%d.md"
