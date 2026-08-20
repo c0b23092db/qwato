@@ -1,5 +1,5 @@
 use crate::config::CreatedConfig;
-use crate::utils::update_frontmatter_field;
+use crate::utils::{read_file_to_string, update_frontmatter_field};
 use anyhow::{Context, Result, anyhow};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 /// Create: ファイルが存在しない場合に作成する
 pub fn create_file_if_not_exists(
     base_directory: &Path,
-    file_path: &Path,
+    file_path: &PathBuf,
     template: &Option<PathBuf>,
     created_config: &Option<CreatedConfig>,
 ) -> Result<bool> {
@@ -18,7 +18,10 @@ pub fn create_file_if_not_exists(
         if let Some(template) = &template {
             let template_path = base_directory.join(template);
             if !template_path.exists() {
-                return Err(anyhow!("Not Exist: Template File - {:?}", template_path));
+                return Err(anyhow!(
+                    "Not Exist Template File: {}",
+                    template_path.display()
+                ));
             }
             fs::copy(&template_path, file_path)?;
         } else {
@@ -42,15 +45,14 @@ pub fn create_file_if_not_exists(
 
 /// Update: YAML frontmatterのフィールドを更新する
 fn read_file_and_update_frontmatter(
-    file_path: &Path,
+    file_path: &PathBuf,
     field_name: &str,
     new_value: &str,
 ) -> Result<()> {
-    let contents = fs::read_to_string(file_path)
-        .with_context(|| format!("Failed to read file: {:?}", file_path))?;
+    let contents = read_file_to_string(file_path)?;
     let mut lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
     update_frontmatter_field(&mut lines, field_name, new_value)?;
     fs::write(file_path, lines.join("\n"))
-        .with_context(|| format!("Failed to write file: {:?}", file_path))?;
+        .with_context(|| format!("Failed to Write File: {:?}", file_path))?;
     Ok(())
 }

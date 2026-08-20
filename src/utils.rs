@@ -1,14 +1,17 @@
 use crate::config::{CommandConfig, Config};
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use dirs::home_dir;
+use std::fs::read_to_string;
 use std::path::PathBuf;
 
 /// Change: '~'をユーザーのホームディレクトリに変換
-pub fn expand_home(path: &str) -> Result<PathBuf> {
+pub fn expand_home(path: &PathBuf) -> Result<PathBuf> {
     if path.starts_with("~") {
         let home = home_dir().ok_or_else(|| anyhow!("Failed to get home directory"))?;
-        let expanded_path = path.replacen("~", home.to_str().unwrap(), 1);
+        let expanded_path = path
+            .to_string_lossy()
+            .replacen("~", home.to_str().unwrap(), 1);
         Ok(PathBuf::from(expanded_path))
     } else {
         Ok(PathBuf::from(path))
@@ -20,7 +23,7 @@ pub fn check_command_exists(config: &Config, command_name: &str) -> Result<Comma
     if let Some(command) = config.command.get(command_name) {
         Ok(command.clone())
     } else {
-        Err(anyhow!("unknown command {:?}", command_name))
+        Err(anyhow!("Unknown Command: {}", command_name))
     }
 }
 
@@ -30,7 +33,12 @@ pub fn conversion_target_file_path(
     command_name: &str,
     command: &CommandConfig,
 ) -> Result<PathBuf> {
-    let base_directory = expand_home(config.base_directory.to_str().unwrap_or("~"))?;
+    let base_directory = expand_home(
+        config
+            .base_directory
+            .as_ref()
+            .unwrap_or(&PathBuf::default()),
+    )?;
     let now = Local::now();
     let command_directory = command
         .directory
@@ -52,7 +60,12 @@ pub fn conversion_target_directory_path(
     config: &Config,
     command: &CommandConfig,
 ) -> Result<PathBuf> {
-    let base_directory = expand_home(config.base_directory.to_str().unwrap_or("~"))?;
+    let base_directory = expand_home(
+        config
+            .base_directory
+            .as_ref()
+            .unwrap_or(&PathBuf::default()),
+    )?;
     let now = Local::now();
     let command_directory = command
         .directory
@@ -63,7 +76,6 @@ pub fn conversion_target_directory_path(
 }
 
 /// Update: YAML frontmatterが存在する場合だけ、指定フィールドを更新する。
-///
 /// - Frontmatterがない場合: 何もしない
 /// - Frontmatterはあるがフィールドがない場合: エラー
 pub fn update_frontmatter_field(
@@ -86,7 +98,7 @@ pub fn update_frontmatter_field(
     let new_value = Local::now().format(format_pattern).to_string();
     for line in &mut lines[frontmatter_start + 1..frontmatter_end] {
         let trimmed = line.trim_start();
-        let Some((key, _old_value)) = trimmed.split_once(':') else {
+        let Some((key, _)) = trimmed.split_once(':') else {
             continue;
         };
         if key.trim() != field_name {
@@ -97,5 +109,10 @@ pub fn update_frontmatter_field(
         *line = format!("{indent}{field_name}: {new_value}");
         return Ok(());
     }
-    Err(anyhow!("Frontmatter field not found: {:?}", field_name))
+    Err(anyhow!("Failed to Found Frontmatter: {}", field_name))
+}
+
+/// Read: FileBuf -> String
+pub fn read_file_to_string(file_path: &PathBuf) -> Result<String> {
+    read_to_string(file_path).with_context(|| format!("Failed to Read: {}", file_path.display()))
 }

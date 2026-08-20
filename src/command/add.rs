@@ -1,29 +1,36 @@
 use crate::config::Config;
-use crate::tool::create_file_if_not_exists;
+use crate::tool::create::create_file_if_not_exists;
+use crate::tool::markdown::{is_blank, is_heading, is_list};
 use crate::utils::{
-    check_command_exists, conversion_target_file_path, expand_home, update_frontmatter_field,
+    check_command_exists, conversion_target_file_path, expand_home, read_file_to_string,
+    update_frontmatter_field,
 };
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use chrono::Local;
 use std::fs;
+use std::path::PathBuf;
 
 pub fn append_message(
     config: &Config,
     command_name: &str,
     message: &str,
-    as_task: bool,
+    clap_tag: &[String],
+    is_checkbox: bool,
+    is_time: bool,
 ) -> Result<()> {
     let command = check_command_exists(config, command_name)?;
-    let base_directory =
-        expand_home(config.base_directory.to_str().unwrap_or("~")).with_context(|| {
-            format!(
-                "Failed to expand base directory: {:?}",
-                config.base_directory
-            )
-        })?;
+    let base_directory = expand_home(
+        config
+            .base_directory
+            .as_ref()
+            .unwrap_or(&PathBuf::from("~")),
+    )?;
     let file_path = conversion_target_file_path(config, command_name, &command)?;
     let now_time = Local::now();
+    if is_time {
+        println!("{}", now_time);
+    }
 
     // Create: Directory and file if they do not exist
     if command.auto_create {
@@ -35,10 +42,18 @@ pub fn append_message(
         )?;
     }
 
-    // Open: File
-    let contents = fs::read_to_string(&file_path)
-        .with_context(|| format!("Failed to read file: {:?}", file_path))?;
+    // Open: File //
+    let contents = read_file_to_string(&file_path)?;
     let mut lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
+    // Format: Tags //
+    let mut tags = command.tags.unwrap_or_default();
+    tags.extend(clap_tag.iter().cloned());
+    let tags = if tags.is_empty() {
+        String::new()
+    } else {
+        format!("#{} ", tags.join(" #"))
+    };
+    // Format: Time //
     let set_time = if command.not_format {
         String::new()
     } else {
@@ -47,12 +62,13 @@ pub fn append_message(
             .to_string()
             + " "
     };
-    let in_message = if !as_task {
-        format!("- {}{}", set_time, message).to_string()
+    // Format: Message //
+    let in_message = if !is_checkbox {
+        "- ".to_string() + &set_time + &tags + message
     } else {
-        format!("- [ ] {}{}", set_time, message).to_string()
+        "- [ ] ".to_string() + &set_time + &tags + message
     };
-    // Update: Modified Field
+    // Update: Modified Field //
     if let Some(modified_config) = &config.modified
         && let Some(field_name) = &modified_config.field
     {
@@ -65,7 +81,7 @@ pub fn append_message(
                 .unwrap_or("%Y-%m-%d %H:%M:%S"),
         )?;
     }
-    // Insert: Message
+    // Insert: Message //
     if let Some(pattern) = command.insert.as_deref() {
         // `insert` が設定されている場合
         let insert = now_time.format(pattern).to_string();
@@ -84,7 +100,7 @@ pub fn append_message(
         lines.insert(insert_index, in_message);
     }
 
-    // Write: File
+    // Write: File //
     let new_contents = lines.join("\n");
     fs::write(&file_path, new_contents)?;
     Ok(())
@@ -95,42 +111,13 @@ fn find_insert_index(lines: &[String], insert: &str, end_line: bool) -> Result<u
     let anchor = lines
         .iter()
         .rposition(|line| line.trim() == insert)
-        .ok_or_else(|| anyhow!("Not Found: Insert line: {:?}", insert))?;
+        .ok_or_else(|| anyhow!("Not Found: Insert line {:?}", insert))?;
     if !end_line {
         return Ok(anchor + 1);
     }
     Ok(find_block_end(lines, anchor + 1))
 }
-/// `line`が見出しの行かどうかを判定する。
-fn is_heading(line: &str) -> bool {
-    let line = line.trim_start();
-    line.starts_with('#')
-}
-/// `line`が箇条書きの行かどうかを判定する。
-fn is_list_item(line: &str) -> bool {
-    let line = line.trim_start();
-    // 箇条書き
-    if matches!(line.as_bytes().first(), Some(b'-' | b'*' | b'+')) {
-        return line
-            .as_bytes()
-            .get(1)
-            .is_some_and(|c| c.is_ascii_whitespace());
-    }
-    // 番号付きリスト: 1. xxx / 10) xxx
-    let Some(separator) = line.find(['.', ')']) else {
-        return false;
-    };
-    separator > 0
-        && line[..separator].chars().all(|c| c.is_ascii_digit())
-        && line[separator + 1..]
-            .chars()
-            .next()
-            .is_some_and(|c| c.is_ascii_whitespace())
-}
-/// `line`が空行かどうかを判定する。
-fn is_blank(line: &str) -> bool {
-    line.trim().is_empty()
-}
+
 /// `start`以降にある現在のブロックの終端を返す。
 fn find_block_end(lines: &[String], start: usize) -> usize {
     let rest = &lines[start..];
@@ -147,20 +134,20 @@ fn find_block_end(lines: &[String], start: usize) -> usize {
     };
     let first_content = start + first_content;
     // `insert`の直後がリストでなければ、次の見出しまでをセクションとみなす
-    if !is_list_item(&lines[first_content]) {
+    if !is_list(&lines[first_content]) {
         return next_heading;
     }
     // リストブロックの終端を探す
     let mut index = first_content;
     while index < next_heading {
         let line = &lines[index];
-        if is_list_item(line) {
+        if is_list(line) {
             index += 1;
             continue;
         }
         if is_blank(line) {
             // 空行の後にリストが続くならリストの一部とみなす
-            let next_is_list = lines.get(index + 1).is_some_and(|next| is_list_item(next));
+            let next_is_list = lines.get(index + 1).is_some_and(|next| is_list(next));
             if next_is_list {
                 index += 1;
                 continue;

@@ -1,1 +1,4 @@
 /target
+/tests/output
+!/tests/target
+qwato.toml
