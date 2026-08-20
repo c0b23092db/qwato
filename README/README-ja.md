@@ -67,7 +67,7 @@ Options:
 ```
 
 ### 引数指定の考え方
-#### `--add` / `--check`
+#### `--add` / `--checkbox`
 一つ目の引数はコマンド、二つ目の引数以降はメッセージとして扱う。
 ```bash
 <command> <message>
@@ -75,84 +75,116 @@ Options:
 #### それ以外
 すべての引数はコマンドとして扱う。
 ```bash
-<command>　<command>　...
+<command>　<command>
 ```
 
-### `--add`
+### テキスト入力
+
+#### `--add`
 ```bash
-qwa <message>
-qwa <command> <message>　<message>　...
-qwa --add <message>
-qwa --add <command> <message> <message> ...
+qwa <message>...
+qwa <command> <message>　<message>...
+qwa --add <message>...
+qwa --add <command> <message> <message>...
 ```
 指定したファイルにメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
-### `--checkbox`
+#### `--checkbox`
 ```bash
-qwa --checkbox <message>
-qwa --checkbox <command> <message> <message> ...
+qwa --checkbox <message>...
+qwa --checkbox <command> <message> <message>...
 ```
 指定したファイルにチェックボックス付きでメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
-### `--list`
+### リスト表示
+
+#### `--list`
 ```bash
 qwa --list
-qwa --list <command> <command> ...
+qwa --list <command> <command>...
 ```
-コマンドで指定しているディレクトリのファイル群を参照し、リストとチェックボックスを表示する。
+リストとチェックボックスを表示する。
+
+#### `--note`
+```bash
+qwa --note
+qwa --note <command> <command>...
+```
+リストを表示する。
+
+#### `--task`
+```bash
+qwa --task
+qwa --task <command> <command>...
+```
+チェックボックスを表示する。
+
+#### `--all`
+```bash
+qwa --all
+```
+時刻フォーマットのないリストも含め全て表示する。
+
+### 動作変更
+
+#### `--tag`
+```bash
+qwa --tag <TAG>...
+```
+`tag1,tag2,tag3`のようにカンマ区切りで指定する。
+```bash
+qwa --add <command>... --tag <TAG>...
+qwa --checkbox <command>... --tag <TAG>...
+```
+コマンドで登録したタグと一緒に指定したタグを付与する。
+```bash
+qwa --list --tag <TAG>...
+qwa --note --tag <TAG>...
+qwa --task --tag <TAG>...
+qwa --all --tag <TAG>...
+```
+指定したタグのいずれかを検索し表示する。
 
 #### `--limit`
 ```bash
 qwa --list --limit 10
 ```
-表示する数を指定する。
+表示する数を変更する。
 
-#### `--all`
+#### `--config`
 ```bash
-qwa --list --all
+qwa --config <config_path>
 ```
-時刻フォーマットのない項目も含め指定した数を表示する。
+読み込む設定ファイルを指定する。
 
-### `--note`
-```bash
-qwa --note
-qwa --note <command> <command> ...
-```
-コマンドで指定しているディレクトリのファイル群を参照し、リストを表示する。
+### 設定表示
 
-### `--task`
-```bash
-qwa --task
-qwa --task <command> <command> ...
-```
-コマンドで指定しているディレクトリのファイル群を参照し、チェックボックスを表示する。
-
-### `--tag`
-```bash
-qwa --tag <tag>
-```
-`tag1,tag2,tag3`のようにカンマ区切りで指定する。
-```bash
-qwa --add <message> --tag <tag>
-qwa --checkbox <message> --tag <tag>
-```
-コマンドで登録したタグと一緒に指定したタグを付与する。
-
-### `--command`
+#### `--command`
 ```bash
 qwa --command
 ```
 使用可能なコマンドを簡易表示する。
 ```bash
-qwa --command <command> <command> ...
+qwa --command <command> <command>...
 ```
 指定したコマンドを詳細表示する。
 
-### `--config`
+### デバッグ出力
+
+#### `--colon-sharp-question`
 ```bash
-qwa --config <config path>
+qwa --colon-sharp-question
 ```
-読み込む設定ファイルを指定する。
+読み込んだ設定ファイルを`"{:#?}"`の形式で表示する。
+
+#### `--utc-offset-time`
+```bash
+qwa --utc-offset-time
+```
+コマンド実行時に取得した時間を返す。
+```
+2026-08-21 00:15:55.451988700 +09:00
+```
 
 ### `--help`
 ```bash
@@ -166,23 +198,9 @@ qwa --version
 ```
 コマンドのバージョンを表示する。
 
-### デバッグ出力用
-
-#### `--load`
-```bash
-qwa --load
-```
-設定ファイルを`"{:#?}"`の形式で表示する。
-
-#### `--time`
-```bash
-qwa --time
-```
-コマンドで取得した時間を返す。
-
 ## ⚙ 設定ファイル ⚙
 **注意事項**
-- `~/.config/qwato/config.toml`、`./qwato.toml`、指定した設定ファイルの順に読み込む。
+- 優先度の高い順に、指定した設定ファイル、`./qwato.toml`、`~/.config/qwato/config.toml`を読み込む。
 - Rustの[chrono](https://docs.rs/chrono)で日付を扱う。
 
 ### デフォルト設定
@@ -206,7 +224,8 @@ not_format = false
 ### 設定項目
 #### **General**
 ##### `base_directory`
-基準となるディレクトリ。
+保管庫となるディレクトリ。
+設定しない場合、ホームディレクトリが指定される。
 ##### `default_command`
 コマンドの指定を行わない場合、デフォルトで使われるコマンドを指定する。
 設定しない場合、一番目の引数に必ずコマンドを要求する。
@@ -216,27 +235,24 @@ trueの場合、グローバル読み込みの対象外になる。
 ##### `auto_command`
 trueの場合、強制的に`default_command`を実行するようにする。
 ##### `time_format`
-リストの先頭に登録されるフォーマット。
-chronoが使用可能。
+リストの先頭に登録されるchrono形式のフォーマット。
 #### **list**
 ##### `limit`
-`--list`、`--note`、`--task`のみ機能する。表示するリストの数。
+表示するリストの数を指定する。
 #### **created**
 MarkdownにYAMLかつfieldが存在する場合、ファイルの作成日に更新する。
 ##### `field`
-ファイルの作成日を登録するフィールド。
+ファイルの作成日を登録するフィールド名。
 指定しない場合、フィールドは自動で更新されない。
 ##### `format`
-フィールドに入力する文字。
-chronoが使用可能。
+フィールドに入力する文字をchrono形式で指定する。
 #### **modified**
 MarkdownにYAMLかつfieldが存在する場合、ファイルの更新時刻に更新する。
 ##### `field`
-ファイルの更新日を登録するフィールド。
+ファイルの更新日を登録するフィールド名。
 指定しない場合、フィールドは自動で更新されない。
 ##### `format`
-フィールドに入力する文字。
-chronoが使用可能。
+フィールドに入力する文字をchrono形式で指定する。
 #### **command**
 ##### `auto_create`
 ファイルが存在しない場合、作成するかを決定する。
@@ -264,14 +280,17 @@ tags = ["tag1", "tag2"]
 ```
 タグを指定する。複数指定する場合はカンマ区切りで指定する。
 ##### `not_format`
-- true: リストのみにする
 - false: 時刻を挿入する
+- true: リストのみにする
 ##### `end_line`
-- true: セクション末尾へ追加する。
-- false: セクション先頭へ追加する。
+- false: 先頭へ追加する。
+- true: 末尾へ追加する。
 
 ### 設定例
 #### Obsidianとの連携
+Obsidianと連携する場合、`base_directory`をObsidianのVaultに設定する。
+次に、`command.daily`の`template`、`directory`、`file`を設定することで、Obsidianのデイリーノートと同じように使える。
+Thinoのようにリスト表示する場合は、`--list`を使うことで、ObsidianのThinoと同じように使える。
 ```toml
 base_directory = "~/Documents/Obsidian"
 default_command = "daily"
@@ -295,25 +314,32 @@ end_line = false
 ```
 
 #### メモ用途で使う場合
+inbox.mdのように一つのファイルに追記する場合、`file`を指定することで、指定したファイルに追記することができる。
 ```toml
 [command.memo]
 auto_create = true
-file = "index.md"
+file = "inbox.md"
 end_line = false
 not_format = true
 ```
 
-#### コマンドを強制的に入れる場合
+もしソフトウェアを検索する人ならば、`tag`に`Software`を付与することで、検索しやすくなる。
+`--all`を使うことで、時刻フォーマットのないリストを表示することができる。
+```toml
+[command.memo]
+auto_create = true
+file = "inbox.md"
+tags = ["Software"]
+not_format = true
+```
+
+#### コマンドを使いたい場合
+`default_command`を設定しない場合、コマンドを要求してきます。
 ```toml
 base_directory = "~/Documents/Obsidian"
 # default_command = "daily"
 ```
-`default_command`を設定しない場合、コマンドを要求してきます。
-```
-> qwa デフォルトコマンドなし
-Not Config: defualt_command
-> qwa daily コマンドを使わせる
-```
+コマンドを入力しないで実行すると`Not Config: defualt_command`が表示されます。
 
 ## 📰 今後 📰
 今後の開発は[開発案.md](./開発案.md)を確認してください。
