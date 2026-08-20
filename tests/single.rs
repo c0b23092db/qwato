@@ -1,5 +1,5 @@
 mod utils;
-use utils::{assert_success, read_output, remove_output, run_qwa, parse_datetime_from_output};
+use utils::{assert_success, parse_datetime_from_output, read_output, remove_output, run_qwa};
 
 const ADD_CONFIG: &str = "./tests/config/add.toml";
 const CHECKBOX_CONFIG: &str = "./tests/config/checkbox.toml";

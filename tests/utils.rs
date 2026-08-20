@@ -1,8 +1,8 @@
+use chrono::DateTime;
 use std::{
     fs,
     process::{Command, Output},
 };
-use chrono::DateTime;
 
 /// Run qwa with the given config path and arguments, returning the output.
 pub fn run_qwa(config_path: &str, args: &[&str]) -> Output {
@@ -35,10 +35,10 @@ pub fn read_output(path: &str) -> String {
 #[allow(dead_code)]
 pub fn parse_datetime_from_output(output: &Output, format: &str) -> String {
     DateTime::parse_from_str(
-            String::from_utf8_lossy(&output.stdout).trim(),
-            "%Y-%m-%d %H:%M:%S%.f %:z",
-        )
-        .expect("Failed to Parse: Time")
-        .format(format)
-        .to_string()
+        String::from_utf8_lossy(&output.stdout).trim(),
+        "%Y-%m-%d %H:%M:%S%.f %:z",
+    )
+    .expect("Failed to Parse: Time")
+    .format(format)
+    .to_string()
 }

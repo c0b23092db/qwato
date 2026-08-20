@@ -119,49 +119,49 @@ pub fn list_entries(
     for (file_index, (date_stamp, file_path)) in files.iter().enumerate() {
         let contents = fs::read_to_string(file_path)
             .with_context(|| format!("Failed to Read: {}", file_path.display()))?;
-            let data_log = entries
-                .entry(date_stamp.clone())
-                .or_insert_with(|| DataLog::new(date_stamp.clone(), is_all));
-            let mut in_frontmatter = false;
-            let mut in_code_block = false;
-            let mut current_index: Option<usize> = None;
-            for line in contents.lines() {
-                let trimmed = line.trim();
-                // Skip: Frontmatter and Code Block
-                if trimmed == "---" {
-                    in_frontmatter = !in_frontmatter;
-                    in_code_block = false;
-                    current_index = None;
-                    continue;
-                }
-                if in_frontmatter {
-                    continue;
-                }
-                if trimmed.starts_with("```") {
-                    in_code_block = !in_code_block;
-                    current_index = None;
-                    continue;
-                }
-                if in_code_block {
-                    continue;
-                }
-                if is_blank(trimmed) || is_heading(trimmed) || trimmed.starts_with('>') {
-                    current_index = None;
-                    continue;
-                }
-                if is_list(trimmed) {
-                    current_index = None;
-                }
-                if data_log.push(line, is_note, is_task) {
-                    current_index = Some(data_log.messages.len() - 1);
-                    continue;
-                }
-                if let Some(index) = current_index {
-                    let current_message = &mut data_log.messages[index].message;
-                    current_message.push('\n');
-                    current_message.push_str(trimmed);
-                }
+        let data_log = entries
+            .entry(date_stamp.clone())
+            .or_insert_with(|| DataLog::new(date_stamp.clone(), is_all));
+        let mut in_frontmatter = false;
+        let mut in_code_block = false;
+        let mut current_index: Option<usize> = None;
+        for line in contents.lines() {
+            let trimmed = line.trim();
+            // Skip: Frontmatter and Code Block
+            if trimmed == "---" {
+                in_frontmatter = !in_frontmatter;
+                in_code_block = false;
+                current_index = None;
+                continue;
             }
+            if in_frontmatter {
+                continue;
+            }
+            if trimmed.starts_with("```") {
+                in_code_block = !in_code_block;
+                current_index = None;
+                continue;
+            }
+            if in_code_block {
+                continue;
+            }
+            if is_blank(trimmed) || is_heading(trimmed) || trimmed.starts_with('>') {
+                current_index = None;
+                continue;
+            }
+            if is_list(trimmed) {
+                current_index = None;
+            }
+            if data_log.push(line, is_note, is_task) {
+                current_index = Some(data_log.messages.len() - 1);
+                continue;
+            }
+            if let Some(index) = current_index {
+                let current_message = &mut data_log.messages[index].message;
+                current_message.push('\n');
+                current_message.push_str(trimmed);
+            }
+        }
 
         let next_date = files.get(file_index + 1).map(|file| file.0.as_str());
         if next_date != Some(date_stamp.as_str())
@@ -262,9 +262,7 @@ fn reached_limit(
         .flat_map(|data_log| data_log.messages.iter())
         .filter(|entry| {
             (is_note && !is_task && matches!(entry.kind, EntryKind::Memo))
-                || (is_task
-                    && !is_note
-                    && matches!(entry.kind, EntryKind::Task { checked: false }))
+                || (is_task && !is_note && matches!(entry.kind, EntryKind::Task { checked: false }))
                 || (!is_note
                     && !is_task
                     && (matches!(entry.kind, EntryKind::Memo)
