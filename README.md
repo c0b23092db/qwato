@@ -1,7 +1,7 @@
 # Qwato (くぁと)
 This English version was translated from the official Japanese documentation with the assistance of Perplexity AI.
 
-日本語/Japanese　documentation: [README-ja.md](./README-ja.md)
+日本語/Japanese　documentation: [README-ja.md](./README/README-ja.md)
 
 ```bash
 qwa
@@ -479,7 +479,7 @@ If you run Qwato without entering a command, it displays `Not Config: defualt_co
 
 ## 📰 Future Plans 📰
 
-See [開発案.md](./開発案.md) for future development plans.
+See [開発案.md](./README/開発案.md) for future development plans.
 
 **Qwato is developed for its creator, who uses Obsidian, so maintenance is intentionally limited.**
 
@@ -495,4 +495,4 @@ See [開発案.md](./開発案.md) for future development plans.
 
 ## 📜 LICENSE 📜
 
-[Apache License Version 2.0](../LICENSE) / http://www.apache.org/licenses/LICENSE-2.0
+[Apache License Version 2.0](./LICENSE) / http://www.apache.org/licenses/LICENSE-2.0
