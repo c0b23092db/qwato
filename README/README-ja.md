@@ -70,29 +70,29 @@ Options:
 #### `--add` / `--checkbox`
 一つ目の引数はコマンド、二つ目の引数以降はメッセージとして扱う。
 ```bash
-<command> <message>
+[command] [message] [message] ...
 ```
 #### それ以外
-すべての引数はコマンドとして扱う。
+すべての引数をコマンドとして扱う。
 ```bash
-<command>　<command>
+[command] [command] ...
 ```
 
 ### テキスト入力
 
 #### `--add`
 ```bash
-qwa <message>...
-qwa <command> <message>　<message>...
-qwa --add <message>...
-qwa --add <command> <message> <message>...
+qwa [message] ...
+qwa [command] [message] [message] ...
+qwa --add [message] ...
+qwa --add [command] [message] [message] ...
 ```
 指定したファイルにメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
 #### `--checkbox`
 ```bash
-qwa --checkbox <message>...
-qwa --checkbox <command> <message> <message>...
+qwa --checkbox [message] ...
+qwa --checkbox [command] [message] [message] ...
 ```
 指定したファイルにチェックボックス付きでメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
@@ -101,21 +101,21 @@ qwa --checkbox <command> <message> <message>...
 #### `--list`
 ```bash
 qwa --list
-qwa --list <command> <command>...
+qwa --list [command] [command] ...
 ```
 リストとチェックボックスを表示する。
 
 #### `--note`
 ```bash
 qwa --note
-qwa --note <command> <command>...
+qwa --note [command] [command] ...
 ```
 リストを表示する。
 
 #### `--task`
 ```bash
 qwa --task
-qwa --task <command> <command>...
+qwa --task [command] [command] ...
 ```
 チェックボックスを表示する。
 
@@ -129,12 +129,12 @@ qwa --all
 
 #### `--tag`
 ```bash
-qwa --tag <TAG>...
+qwa --tag <TAG>
 ```
 `tag1,tag2,tag3`のようにカンマ区切りで指定する。
 ```bash
-qwa --add <command>... --tag <TAG>...
-qwa --checkbox <command>... --tag <TAG>...
+qwa --add [message] --tag <TAG>...
+qwa --checkbox [message] --tag <TAG>...
 ```
 コマンドで登録したタグと一緒に指定したタグを付与する。
 ```bash
@@ -165,7 +165,7 @@ qwa --command
 ```
 使用可能なコマンドを簡易表示する。
 ```bash
-qwa --command <command> <command>...
+qwa --command [command] [command]...
 ```
 指定したコマンドを詳細表示する。
 
@@ -333,7 +333,7 @@ tags = ["Software"]
 not_format = true
 ```
 
-#### コマンドを使いたい場合
+#### コマンドを強制的に使わせる場合
 `default_command`を設定しない場合、コマンドを要求してきます。
 ```toml
 base_directory = "~/Documents/Obsidian"
