@@ -40,7 +40,7 @@ struct Args {
     #[arg(long)]
     all: bool,
     /// Tags for the message
-    #[arg(long, value_delimiter = ',', num_args = 1..)]
+    #[arg(long, alias = "tags", value_delimiter = ',', num_args = 1..)]
     tag: Vec<String>,
     /// Show the limit of list messages
     #[arg(long)]
