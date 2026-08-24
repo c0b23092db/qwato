@@ -127,11 +127,11 @@ qwa --all
 
 ### 動作変更
 
-#### `--tag`
+#### `--tag` or `--tags`
 ```bash
 qwa --tag <TAG>
 ```
-`tag1,tag2,tag3`のようにカンマ区切りで指定する。
+`tag1,tag2,tag3`のようにカンマ区切りで指定する。`--tags`がエイリアスとして使える。
 ```bash
 qwa --add [message] --tag <TAG>...
 qwa --checkbox [message] --tag <TAG>...
