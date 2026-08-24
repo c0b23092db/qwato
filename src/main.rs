@@ -42,6 +42,9 @@ struct Args {
     /// Tags for the message
     #[arg(long, alias = "tags", value_delimiter = ',', num_args = 1..)]
     tag: Vec<String>,
+    /// Link for the message
+    #[arg(long)]
+    link: String,
     /// Show the limit of list messages
     #[arg(long)]
     limit: Option<usize>,
@@ -100,6 +103,7 @@ fn run() -> Result<()> {
                 &config,
                 &command,
                 &message,
+                &args.link,
                 &args.tag,
                 args.checkbox,
                 args.utc_offset_time,

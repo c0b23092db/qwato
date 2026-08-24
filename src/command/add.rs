@@ -15,6 +15,7 @@ pub fn append_message(
     config: &Config,
     command_name: &str,
     message: &str,
+    link: &str,
     clap_tag: &[String],
     is_checkbox: bool,
     is_time: bool,
@@ -62,11 +63,17 @@ pub fn append_message(
             .to_string()
             + " "
     };
+    // Format: Link //
+    let message = if !link.is_empty() {
+        format!("[{}]({})", message, link)
+    } else {
+        message.to_string()
+    };
     // Format: Message //
     let in_message = if !is_checkbox {
-        "- ".to_string() + &set_time + &tags + message
+        "- ".to_string() + &set_time + &tags + &message
     } else {
-        "- [ ] ".to_string() + &set_time + &tags + message
+        "- [ ] ".to_string() + &set_time + &tags + &message
     };
     // Update: Modified Field //
     if let Some(modified_config) = &config.modified
