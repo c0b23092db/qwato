@@ -57,11 +57,10 @@ Options:
   -t, --task                  List all tasks
       --all                   List all messages, including messages without a time format
       --tag <TAG>...          Tags for the message
+      --link <LINK>           Link for the message
       --limit <LIMIT>         Show the limit of list messages
       --command               Check to Use Command
       --config <config_path>  Config File Path
-      --utc-offset-time       Debug: Show UTC Offset Time
-      --colon-sharp-question  Debug: Show Load Config File
   -h, --help                  Print help
   -V, --version               Print version
 ```
@@ -169,15 +168,11 @@ qwa --command [command] [command]...
 ```
 指定したコマンドを詳細表示する。
 
-### デバッグ出力
+### 非表示されているオプション
 
-#### `--colon-sharp-question`
-```bash
-qwa --colon-sharp-question
-```
-読み込んだ設定ファイルを`"{:#?}"`の形式で表示する。
+#### デバッグ出力
 
-#### `--utc-offset-time`
+##### `--utc-offset-time`
 ```bash
 qwa --utc-offset-time
 ```
@@ -185,6 +180,12 @@ qwa --utc-offset-time
 ```
 2026-08-21 00:15:55.451988700 +09:00
 ```
+
+##### `--colon-sharp-question`
+```bash
+qwa --colon-sharp-question
+```
+読み込んだ設定ファイルを`"{:#?}"`の形式で表示する。
 
 ### `--help`
 ```bash

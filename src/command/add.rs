@@ -15,7 +15,7 @@ pub fn append_message(
     config: &Config,
     command_name: &str,
     message: &str,
-    link: &str,
+    link: Option<&str>,
     clap_tag: &[String],
     is_checkbox: bool,
     is_time: bool,
@@ -64,7 +64,7 @@ pub fn append_message(
             + " "
     };
     // Format: Link //
-    let message = if !link.is_empty() {
+    let message = if let Some(link) = link {
         format!("[{}]({})", message, link)
     } else {
         message.to_string()

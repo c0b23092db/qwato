@@ -44,7 +44,7 @@ struct Args {
     tag: Vec<String>,
     /// Link for the message
     #[arg(long)]
-    link: String,
+    link: Option<String>,
     /// Show the limit of list messages
     #[arg(long)]
     limit: Option<usize>,
@@ -55,10 +55,10 @@ struct Args {
     #[arg(long, value_name = "config_path", value_parser)]
     config: Option<PathBuf>,
     /// Debug: Show UTC Offset Time
-    #[arg(long)]
+    #[arg(long, hide = true)]
     utc_offset_time: bool,
     /// Debug: Show Load Config File
-    #[arg(long)]
+    #[arg(long, hide = true)]
     colon_sharp_question: bool,
     /// Additional arguments
     #[arg(value_name = "arguments")]
@@ -103,7 +103,7 @@ fn run() -> Result<()> {
                 &config,
                 &command,
                 &message,
-                &args.link,
+                args.link.as_deref(),
                 &args.tag,
                 args.checkbox,
                 args.utc_offset_time,
