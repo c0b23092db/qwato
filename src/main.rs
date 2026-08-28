@@ -65,14 +65,7 @@ struct Args {
     argument: Vec<String>,
 }
 
-fn main() {
-    if let Err(error) = run() {
-        eprintln!("{error}");
-        std::process::exit(1);
-    }
-}
-
-fn run() -> Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
     let mut config = load_config(&args.config)?;
     config.set_limit(

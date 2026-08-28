@@ -123,6 +123,7 @@ impl Config {
     }
 }
 
+/// Load: Config Files
 pub fn load_config(config_path: &Option<PathBuf>) -> Result<Config> {
     if let Some(config_path) = config_path
         && !config_path.exists()
@@ -149,9 +150,9 @@ pub fn load_config(config_path: &Option<PathBuf>) -> Result<Config> {
 /// 3. Home directory: ~/.config/qwato/config.toml
 fn find_config_path(path: &Option<PathBuf>) -> Result<Vec<PathBuf>> {
     let mut config_paths = Vec::new();
-    // Home directory: ~/.config/qwato/config.toml
+    // Config directory: ~/.config/qwato/config.toml
     let config_path = home_dir()
-        .unwrap_or_else(|| home_dir().unwrap_or(PathBuf::from("~")))
+        .unwrap_or_else(|| PathBuf::from("~"))
         .join(".config")
         .join("qwato")
         .join("config.toml");
