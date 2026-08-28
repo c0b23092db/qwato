@@ -52,7 +52,7 @@ struct Args {
     #[arg(long)]
     command: bool,
     /// Config File Path
-    #[arg(long, value_name = "config_path", value_parser)]
+    #[arg(long, value_name = "path", value_parser)]
     config: Option<PathBuf>,
     /// Debug: Show UTC Offset Time
     #[arg(long, hide = true)]
