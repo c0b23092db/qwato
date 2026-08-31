@@ -39,6 +39,12 @@ Qwato is intended for users who write daily notes with Obsidian QuickAdd Capture
 
 ### Cargo
 
+### Binary
+- [Windows - zip](https://github.com/c0b23092db/qwato/releases/download/v0.3.0/qwa-windows-x86_64.zip)
+- [Windows - exe](https://github.com/c0b23092db/qwato/releases/download/v0.3.0/qwa.exe)
+- [Linux - tar.gz](https://github.com/c0b23092db/qwato/releases/download/v0.3.0/qwa-linux-x86_64.tar.gz)
+- [Mac - tar.gz](https://github.com/c0b23092db/qwato/releases/download/v0.3.0/qwa-macos-x86_64.tar.gz)
+
 #### cargo install
 
 ```bash
@@ -55,6 +61,12 @@ cargo install --git https://github.com/c0b23092db/qwato
 
 ```bash
 cargo binstall qwato
+```
+
+### eget
+
+```bash
+eget c0b23092db/qwato
 ```
 
 ## 📖 Commands 📖
