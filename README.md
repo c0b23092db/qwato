@@ -1,7 +1,7 @@
 # Qwato (くぁと)
 This English version was translated from the official Japanese documentation with the assistance of Perplexity AI.
 
-日本語/Japanese　documentation: [README-ja.md](./README/README-ja.md)
+日本語 / Japanese documentation: [README-ja.md](./README-ja.md)
 
 ```bash
 qwa
@@ -9,13 +9,12 @@ qwa
 
 **A command-line tool for adding memos to specified files.**
 
-Qwato is intended for users who write in daily notes with Obsidian QuickAdd Capture. Enjoy the convenience of writing from the terminal with a command, without having to launch Obsidian.
+Qwato is intended for users who write daily notes with Obsidian QuickAdd Capture. Enjoy the convenience of writing from the terminal without launching Obsidian.
 
 ## ⭐ Features ⭐
-
-- One-line appending that reproduces Obsidian QuickAdd Capture
-- Timeline display that reproduces Obsidian Thino
-- A journaling tool primarily based on one page per day
+- A journaling tool primarily based on one page per day.
+- One-line appending inspired by Obsidian QuickAdd Capture.
+- Timeline-style display inspired by Obsidian Thino.
 
 ## 💻 Supported Environments 💻
 
@@ -38,7 +37,7 @@ Qwato is intended for users who write in daily notes with Obsidian QuickAdd Capt
 
 [Download qwa.exe v0.2.0](https://github.com/c0b23092db/qwato/releases/download/v0.2.0/qwa.exe)
 
-### cargo
+### Cargo
 
 #### cargo install
 
@@ -73,16 +72,19 @@ Arguments:
 Options:
   -a, --add                   Add a new message
   -c, --checkbox              Add a new checkbox
+      --last-edit             Edit the last inserted memo
+  -s, --summary               Show summary of messages updated today
   -l, --list                  List all commands
   -n, --note                  List all notes
   -t, --task                  List all tasks
       --all                   List all messages, including messages without a time format
       --tag <TAG>...          Tags for the message
+      --link <LINK>           Link for the message
+      --from <YYYY-MM-DD>     Filter from date (inclusive, format: YYYY-MM-DD)
+      --to <YYYY-MM-DD>       Filter to date (inclusive, format: YYYY-MM-DD)
       --limit <LIMIT>         Show the limit of list messages
       --command               Check to Use Command
-      --config <config_path>  Config File Path
-      --utc-offset-time       Debug: Show UTC Offset Time
-      --colon-sharp-question  Debug: Show Load Config File
+      --config <path>         Config File Path
   -h, --help                  Print help
   -V, --version               Print version
 ```
@@ -93,16 +95,16 @@ Options:
 
 The first argument is treated as a command, and the second and subsequent arguments are treated as the message.
 
-```text
-<command> <message>
+```bash
+[command] [message] [message] ...
 ```
 
 #### Other options
 
 All arguments are treated as commands.
 
-```text
-<command> <command>
+```bash
+[command] [command] ...
 ```
 
 ### Text input
@@ -110,10 +112,10 @@ All arguments are treated as commands.
 #### `--add`
 
 ```bash
-qwa <message>...
-qwa <command> <message> <message>...
-qwa --add <message>...
-qwa --add <command> <message> <message>...
+qwa [message] ...
+qwa [command] [message] [message] ...
+qwa --add [message] ...
+qwa --add [command] [message] [message] ...
 ```
 
 Appends a memo to the specified file. All arguments from the second argument onward are treated as one line.
@@ -121,19 +123,35 @@ Appends a memo to the specified file. All arguments from the second argument onw
 #### `--checkbox`
 
 ```bash
-qwa --checkbox <message>...
-qwa --checkbox <command> <message> <message>...
+qwa --checkbox [message] ...
+qwa --checkbox [command] [message] [message] ...
 ```
 
 Appends a memo with a checkbox to the specified file. All arguments from the second argument onward are treated as one line.
 
+#### `--last-edit`
+
+```bash
+qwa --last-edit [message] ...
+```
+
+Edits the last memo that was appended. All arguments from the second argument onward are treated as one line.
+
 ### List display
+
+#### `--summary`
+
+```bash
+qwa --summary
+```
+
+Displays a summary of memos updated today.
 
 #### `--list`
 
 ```bash
 qwa --list
-qwa --list <command> <command>...
+qwa --list [command] [command] ...
 ```
 
 Displays list items and checkboxes.
@@ -142,7 +160,7 @@ Displays list items and checkboxes.
 
 ```bash
 qwa --note
-qwa --note <command> <command>...
+qwa --note [command] [command] ...
 ```
 
 Displays list items.
@@ -151,7 +169,7 @@ Displays list items.
 
 ```bash
 qwa --task
-qwa --task <command> <command>...
+qwa --task [command] [command] ...
 ```
 
 Displays checkboxes.
@@ -166,17 +184,25 @@ Displays all entries, including list items without a time format.
 
 ### Behavior modifiers
 
-#### `--tag`
+#### `--from` / `--to`
 
 ```bash
-qwa --tag <TAG>...
+qwa --list --from <YYYY-MM-DD> --to <YYYY-MM-DD>
 ```
 
-Specify tags separated by commas, such as `tag1,tag2,tag3`.
+Displays entries within the specified period. `--from` includes the specified date and later; `--to` includes the specified date and earlier.
+
+#### `--tag` / `--tags`
 
 ```bash
-qwa --add <command>... --tag <TAG>...
-qwa --checkbox <command>... --tag <TAG>...
+qwa --tag <TAG>
+```
+
+Specify tags separated by commas, such as `tag1,tag2,tag3`. `--tags` can also be used as an alias.
+
+```bash
+qwa --add [message] --tag <TAG>...
+qwa --checkbox [message] --tag <TAG>...
 ```
 
 The specified tags are added together with the tags registered for the command.
@@ -190,6 +216,14 @@ qwa --all --tag <TAG>...
 
 Searches for and displays entries containing any of the specified tags.
 
+#### `--link`
+
+```bash
+qwa --link <LINK>
+```
+
+Adds a link to the memo.
+
 #### `--limit`
 
 ```bash
@@ -201,10 +235,10 @@ Changes the number of entries displayed.
 #### `--config`
 
 ```bash
-qwa --config <config_path>
+qwa --config <path>
 ```
 
-Specifies the configuration file to load.
+Specifies the configuration file to load. If a directory is specified, Qwato loads the configuration files contained in that directory.
 
 ### Configuration display
 
@@ -217,20 +251,12 @@ qwa --command
 Displays a simple list of available commands.
 
 ```bash
-qwa --command <command> <command>...
+qwa --command [command] [command] ...
 ```
 
 Displays detailed information about the specified commands.
 
 ### Debug output
-
-#### `--colon-sharp-question`
-
-```bash
-qwa --colon-sharp-question
-```
-
-Displays the loaded configuration in the `"{:#?}"` format.
 
 #### `--utc-offset-time`
 
@@ -243,6 +269,14 @@ Returns the time obtained when the command was executed.
 ```text
 2026-08-21 00:15:55.451988700 +09:00
 ```
+
+#### `--colon-sharp-question`
+
+```bash
+qwa --colon-sharp-question
+```
+
+Displays the loaded configuration in the `"{:#?}"` format.
 
 ### `--help`
 
@@ -264,7 +298,7 @@ Displays the command version.
 
 **Notes**
 
-- Configuration files are loaded in the following order of priority: the specified configuration file, `./qwato.toml`, then `~/.config/qwato/config.toml`.
+- Configuration files are loaded in the following priority order: the specified configuration file, `./qwato.toml`, then TOML files in `~/.config/qwato`.
 - Dates use the Rust [chrono](https://docs.rs/chrono) crate.
 
 ### Default configuration
@@ -292,25 +326,19 @@ not_format = false
 
 ### Configuration options
 
-#### **General**
+#### General
 
 ##### `base_directory`
 
-The directory used as the storage root.
-
-If omitted, the home directory is used.
+The storage-root directory. If omitted, the home directory is used.
 
 ##### `default_command`
 
-Specifies the default command used when no command is provided.
-
-If omitted, a command is always required as the first argument.
+Specifies the command used by default when no command is provided. If omitted, a command is always required as the first argument.
 
 ##### `no_global`
 
-If `true`, the configuration is excluded from global loading.
-
-The configuration file with the highest priority is always loaded.
+If `true`, this configuration is excluded from global loading. The highest-priority configuration file is always loaded.
 
 ##### `auto_command`
 
@@ -320,45 +348,55 @@ If `true`, `default_command` is always executed forcibly.
 
 The chrono-format string inserted at the beginning of list items.
 
-#### **list**
+##### `data_format`
+
+Specifies the format used to locate files. The available formats are:
+
+- `line`: `YYYY-MM-DD.md`
+- `slash`: `YYYY/MM/DD.md`
+- `slash_line`: `YYYY/MM/DD/YYYY-MM-DD.md`
+- `header`: `file-name.md / Header for YYYY-MM-DD`
+- `onefile`: `file-name.md`
+
+#### `list`
 
 ##### `limit`
 
 Specifies the number of list items to display.
 
-#### **created**
+#### `created`
 
-If the Markdown file contains YAML frontmatter and the specified field exists, it is updated with the file creation date.
+If a Markdown file contains YAML frontmatter and the specified field exists, it is updated with the file creation date.
 
 ##### `field`
 
-The field name in which to store the file creation date.
-
-If omitted, the field is not updated automatically.
+The field name in which to store the file creation date. If omitted, the field is not updated automatically.
 
 ##### `format`
 
 The chrono-format string used for the field value.
 
-#### **modified**
+#### `modified`
 
-If the Markdown file contains YAML frontmatter and the specified field exists, it is updated with the file modification time.
+If a Markdown file contains YAML frontmatter and the specified field exists, it is updated with the file modification time.
 
 ##### `field`
 
-The field name in which to store the file modification date.
-
-If omitted, the field is not updated automatically.
+The field name in which to store the file modification time. If omitted, the field is not updated automatically.
 
 ##### `format`
 
 The chrono-format string used for the field value.
 
-#### **command**
+#### `command`
 
 ##### `auto_create`
 
 Determines whether the file should be created if it does not exist.
+
+##### `date_format`
+
+Specifies the file format, overriding the global setting. Available formats are `line`, `slash`, `slash_line`, `header`, and `onefile` as described above.
 
 ##### `template`
 
@@ -366,23 +404,15 @@ The path of the source file to copy when creating a new file.
 
 ##### `directory`
 
-Specifies the directory path relative to `base_directory`. If omitted, `base_directory` itself is used.
-
-The chrono format is supported.
+Specifies the directory path relative to `base_directory`. If omitted, `base_directory` itself is used. Chrono formatting is supported.
 
 ##### `file`
 
-Specifies the file name.
-
-The chrono format is supported.
+Specifies the file name. Chrono formatting is supported.
 
 ##### `insert`
 
-The chrono format is supported.
-
-Specifies the line used as the insertion reference. The line is matched exactly.
-
-If `insert` is configured but the specified line does not exist, an error is returned.
+Specifies the exact line used as the insertion reference. Chrono formatting is supported. If the configured line does not exist, an error is returned.
 
 - If `end_line` is `true`, the entry is added to the end of the section.
 - If `end_line` is `false`, the entry is added to the beginning of the section.
@@ -398,7 +428,7 @@ If `insert` is not configured:
 tags = ["tag1", "tag2"]
 ```
 
-Specifies tags. To specify multiple tags, provide them as a comma-separated list.
+Specifies tags. Multiple tags can be specified as a comma-separated list.
 
 ##### `not_format`
 
@@ -414,11 +444,9 @@ Specifies tags. To specify multiple tags, provide them as a comma-separated list
 
 #### Integration with Obsidian
 
-To integrate with Obsidian, set `base_directory` to your Obsidian Vault.
+Set `base_directory` to your Obsidian Vault. Then configure `template`, `directory`, and `file` under `command.daily` to use Qwato like an Obsidian Daily Note.
 
-Then configure `template`, `directory`, and `file` under `command.daily` to use it like an Obsidian Daily Note.
-
-To display a list like Thino, use `--list` to reproduce an Obsidian Thino-like view.
+To display entries like Thino, use `--list`.
 
 ```toml
 base_directory = "~/Documents/Obsidian"
@@ -444,7 +472,7 @@ end_line = false
 
 #### Using Qwato for memos
 
-To append to a single file such as `inbox.md`, specify the file with `file`.
+To append to a single file such as `inbox.md`, specify `file`.
 
 ```toml
 [command.memo]
@@ -454,9 +482,7 @@ end_line = false
 not_format = true
 ```
 
-If you are searching for software, adding `Software` to `tags` makes it easier to search.
-
-Using `--all` displays list items without a time format.
+Adding `Software` to `tags` can make software-related entries easier to find. Use `--all` to display list items without a time format.
 
 ```toml
 [command.memo]
@@ -475,19 +501,19 @@ base_directory = "~/Documents/Obsidian"
 # default_command = "daily"
 ```
 
-If you run Qwato without entering a command, it displays `Not Config: defualt_command`.
+Running Qwato without a command displays `Not Config: defualt_command`.
 
 ## 📰 Future Plans 📰
 
-See [開発案.md](./README/開発案.md) for future development plans.
+See [開発案.md](./開発案.md) for future development plans.
 
 **Qwato is developed for its creator, who uses Obsidian, so maintenance is intentionally limited.**
 
 ## 💡 Inspiration 💡
 
-- [Obsidian](https://obsidian.md/): Maintaining a journal
-- [QuickAdd](https://community.obsidian.md/plugins/quickadd): Simple commands
-- [Thino](https://community.obsidian.md/plugins/obsidian-memos): Timeline display
+- [Obsidian](https://obsidian.md/): Maintaining a journal.
+- [QuickAdd](https://community.obsidian.md/plugins/quickadd): Simple commands.
+- [Thino](https://community.obsidian.md/plugins/obsidian-memos): Timeline display.
 
 ## 🔌 Debugging 🔌
 
