@@ -52,16 +52,16 @@ Arguments:
 Options:
   -a, --add                Add a new message
   -c, --checkbox           Add a new checkbox
+      --last-edit          Edit the last inserted memo
+  -s, --summary            Show summary of messages updated today
   -l, --list               List all commands
   -n, --note               List all notes
   -t, --task               List all tasks
       --all                List all messages, including messages without a time format
-  -s, --summary            Show summary of messages updated today
-      --last-edit          Edit the last inserted memo
-      --from <YYYY-MM-DD>  Filter from date (inclusive, format: YYYY-MM-DD)
-      --to <YYYY-MM-DD>    Filter to date (inclusive, format: YYYY-MM-DD)
       --tag <TAG>...       Tags for the message
       --link <LINK>        Link for the message
+      --from <YYYY-MM-DD>  Filter from date (inclusive, format: YYYY-MM-DD)
+      --to <YYYY-MM-DD>    Filter to date (inclusive, format: YYYY-MM-DD)
       --limit <LIMIT>      Show the limit of list messages
       --command            Check to Use Command
       --config <path>      Config File Path
@@ -99,7 +99,19 @@ qwa --checkbox [command] [message] [message] ...
 ```
 指定したファイルにチェックボックス付きでメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
+#### `--last-edit`
+```bash
+qwa --last-edit [message] ...
+```
+最後に追記したメモを編集する。二つ目の引数以降はすべて一行として扱われる。
+
 ### リスト表示
+
+#### `--summary`
+```bash
+qwa --summary
+```
+今日更新されたメモのサマリーを表示する。
 
 #### `--list`
 ```bash
@@ -130,6 +142,12 @@ qwa --all
 
 ### 動作変更
 
+#### `--from` / `--to`
+```bash
+qwa --list --from <YYYY-MM-DD> --to <YYYY-MM-DD>
+```
+指定した期間のリストを表示する。`--from`は指定した日付以降、`--to`は指定した日付以前のリストを表示する。
+
 #### `--tag` or `--tags`
 ```bash
 qwa --tag <TAG>
@@ -147,6 +165,12 @@ qwa --task --tag <TAG>...
 qwa --all --tag <TAG>...
 ```
 指定したタグのいずれかを検索し表示する。
+
+#### `--link`
+```bash
+qwa --link <LINK>
+```
+メモにリンクを付与する。
 
 #### `--limit`
 ```bash

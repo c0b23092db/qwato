@@ -33,6 +33,9 @@ struct Args {
     /// Add a new checkbox
     #[arg(short, long)]
     checkbox: bool,
+    /// Edit the last inserted memo
+    #[arg(long, value_name = "message")]
+    last_edit: bool,
     /// Show summary of messages updated today
     #[arg(short, long)]
     summary: bool,
@@ -48,21 +51,18 @@ struct Args {
     /// List all messages, including messages without a time format
     #[arg(long)]
     all: bool,
-    /// Edit the last inserted memo
-    #[arg(long, value_name = "message")]
-    last_edit: bool,
-    /// Filter from date (inclusive, format: YYYY-MM-DD)
-    #[arg(long, value_name = "YYYY-MM-DD", value_parser = parse_date)]
-    from: Option<NaiveDate>,
-    /// Filter to date (inclusive, format: YYYY-MM-DD)
-    #[arg(long, value_name = "YYYY-MM-DD", value_parser = parse_date)]
-    to: Option<NaiveDate>,
     /// Tags for the message
     #[arg(long, alias = "tags", value_delimiter = ',', num_args = 1..)]
     tag: Vec<String>,
     /// Link for the message
     #[arg(long)]
     link: Option<String>,
+    /// Filter from date (inclusive, format: YYYY-MM-DD)
+    #[arg(long, value_name = "YYYY-MM-DD", value_parser = parse_date)]
+    from: Option<NaiveDate>,
+    /// Filter to date (inclusive, format: YYYY-MM-DD)
+    #[arg(long, value_name = "YYYY-MM-DD", value_parser = parse_date)]
+    to: Option<NaiveDate>,
     /// Show the limit of list messages
     #[arg(long)]
     limit: Option<usize>,
