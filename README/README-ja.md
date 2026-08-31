@@ -237,6 +237,13 @@ trueの場合、グローバル読み込みの対象外になる。
 trueの場合、強制的に`default_command`を実行するようにする。
 ##### `time_format`
 リストの先頭に登録されるchrono形式のフォーマット。
+##### `data_format`
+取得するファイルの形式。Obsidianのデイリーノートを参考にしている。
+- `line`: YYYY-MM-DD.md
+- `slash`: YYYY/MM/DD.md
+- `slash_line`: YYYY/MM/DD/YYYY-MM-DD.md
+- `header`: file-name.md / Header for YYYY-MM-DD
+- `onefile`: file-name.md
 #### **list**
 ##### `limit`
 表示するリストの数を指定する。
@@ -257,6 +264,13 @@ MarkdownにYAMLかつfieldが存在する場合、ファイルの更新時刻に
 #### **command**
 ##### `auto_create`
 ファイルが存在しない場合、作成するかを決定する。
+##### `date_format`
+取得するファイルの形式。Globalの設定を上書きする。
+- `line`: YYYY-MM-DD.md
+- `slash`: YYYY/MM/DD.md
+- `slash_line`: YYYY/MM/DD/YYYY-MM-DD.md
+- `header`: file-name.md / Header for YYYY-MM-DD
+- `onefile`: file-name.md
 ##### `template`
 ファイルの新規作成時、コピー元となるファイルのパス。
 ##### `directory`

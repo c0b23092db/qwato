@@ -1,12 +1,9 @@
-use crate::config::{CommandConfig, Config};
+use crate::config::Config;
 use crate::utils::datalog::{DataLog, EntryKind};
-use crate::utils::{check_command_exists, conversion_target_directory_path};
-use anyhow::{Context, Result};
-use chrono::{NaiveDate, NaiveTime};
+use anyhow::Result;
+use chrono::NaiveTime;
 use colored::*;
-use std::collections::{BTreeMap, HashSet};
-use std::fs;
-use std::path::Path;
+use std::collections::HashSet;
 
 /// List: 指定されたコマンドのリスト項目を表示
 pub fn list_entries(
@@ -17,56 +14,12 @@ pub fn list_entries(
     is_task: bool,
     is_all: bool,
 ) -> Result<()> {
-    let mut targets = command_names.to_vec();
-    if targets.is_empty() {
-        targets.push(
-            config
-                .default_command
-                .clone()
-                .expect("Not Setting: default command"),
-        );
-    }
     let limit = config.list.as_ref().map(|list| list.limit).unwrap_or(10);
     if limit == 0 {
         return Ok(());
     }
-    let mut entries: BTreeMap<String, DataLog> = BTreeMap::new();
 
-    // Create: DataLog
-    let mut files = Vec::new();
-    for command_name in targets {
-        let command = check_command_exists(config, &command_name)?;
-        let paths = fs::read_dir(conversion_target_directory_path(config, &command)?)
-            .with_context(|| format!("Failed to Read Directory: {:?}", command.directory))?
-            .filter_map(|entry| entry.ok())
-            .map(|entry| entry.path())
-            .filter(|path| path.is_file())
-            .filter(|path| is_command_file(path, &command))
-            .map(|file_path| {
-                let date_stamp = resolve_date_stamp(&file_path, &command)?;
-                Ok((date_stamp, file_path))
-            })
-            .collect::<Result<Vec<_>>>()?;
-        files.extend(paths);
-    }
-    files.sort_by(|left, right| right.0.cmp(&left.0));
-
-    for (file_index, (date_stamp, file_path)) in files.iter().enumerate() {
-        let contents = fs::read_to_string(file_path)
-            .with_context(|| format!("Failed to Read: {}", file_path.display()))?;
-        let parsed = DataLog::parse(&contents, date_stamp, is_note, is_task, is_all);
-        let data_log = entries
-            .entry(date_stamp.clone())
-            .or_insert_with(|| DataLog::new(date_stamp.clone(), is_all));
-        data_log.messages.extend(parsed.messages);
-
-        let next_date = files.get(file_index + 1).map(|file| file.0.as_str());
-        if next_date != Some(date_stamp.as_str())
-            && reached_limit(&entries, tag_filters, is_note, is_task, limit)
-        {
-            break;
-        }
-    }
+    let entries = DataLog::collect_from_commands(config, command_names, is_note, is_task, is_all)?;
 
     // Sort: 日付順
     let mut sorted_entries: Vec<DataLog> = entries
@@ -100,34 +53,15 @@ pub fn list_entries(
             }
             match message.kind {
                 EntryKind::Memo => print_message(message.timestamp, &message.message, None),
-                EntryKind::Task { checked } => print_message(message.timestamp, &message.message, Some(checked)),
+                EntryKind::Task { checked } => {
+                    print_message(message.timestamp, &message.message, Some(checked))
+                }
             }
             printed += 1;
         }
     }
 
     Ok(())
-}
-
-/// Check: コマンドのファイル名
-fn is_command_file(file_path: &Path, command: &CommandConfig) -> bool {
-    let Some(pattern) = command.file.as_deref() else {
-        return true;
-    };
-    let pattern = pattern.to_string_lossy();
-    let file_name = file_path.file_name().and_then(|name| name.to_str());
-
-    if file_name == Some(pattern.as_ref()) {
-        return true;
-    }
-
-    let format = command.date_format();
-    match format.parse_date_from_path(file_path) {
-        Some(_) => true,
-        None => file_name
-            .map(|name| NaiveDate::parse_from_str(name, &pattern).is_ok())
-            .unwrap_or(false),
-    }
 }
 
 /// Check: Tag
@@ -148,70 +82,9 @@ fn message_matches_tags(message: &str, tag_filters: &[String]) -> bool {
         .any(|tag| tags.contains(&tag))
 }
 
-/// Check: 表示対象数が上限に達したか
-fn reached_limit(
-    entries: &BTreeMap<String, DataLog>,
-    tag_filters: &[String],
-    is_note: bool,
-    is_task: bool,
-    limit: usize,
-) -> bool {
-    entries
-        .values()
-        .flat_map(|data_log| data_log.messages.iter())
-        .filter(|entry| {
-            (is_note && !is_task && matches!(entry.kind, EntryKind::Memo))
-                || (is_task && !is_note && matches!(entry.kind, EntryKind::Task { checked: false }))
-                || (!is_note
-                    && !is_task
-                    && (matches!(entry.kind, EntryKind::Memo)
-                        || matches!(entry.kind, EntryKind::Task { checked: false })))
-        })
-        .filter(|entry| message_matches_tags(&entry.message, tag_filters))
-        .count()
-        >= limit
-}
-
 /// Normalize: Tag
 fn normalize_tag(tag: &str) -> String {
     tag.trim().trim_matches('#').trim().to_ascii_lowercase()
-}
-
-/// Resolve: ファイル名から日付を取得する
-fn resolve_date_stamp(file_path: &Path, command: &CommandConfig) -> Result<String> {
-    let format = command.date_format();
-    if let Some(date) = format.parse_date_from_path(file_path) {
-        return Ok(date.to_string());
-    }
-
-    if let Some(file_name) = file_path.file_stem().and_then(|s| s.to_str()) {
-        if let Some(pattern) = command.file.as_deref()
-            && let Ok(date) = NaiveDate::parse_from_str(file_name, &pattern.to_string_lossy())
-        {
-            return Ok(date.to_string());
-        }
-
-        if let Ok(date) = NaiveDate::parse_from_str(file_name, "%Y-%m-%d") {
-            return Ok(date.to_string());
-        }
-    }
-
-    let metadata = fs::metadata(file_path)
-        .with_context(|| format!("Failed to Read Metadata: {}", file_path.display()))?;
-
-    if let Ok(created) = metadata.created() {
-        let datetime: chrono::DateTime<chrono::Local> = created.into();
-        return Ok(datetime.date_naive().to_string());
-    }
-    if let Ok(modified) = metadata.modified() {
-        let datetime: chrono::DateTime<chrono::Local> = modified.into();
-        return Ok(datetime.date_naive().to_string());
-    }
-
-    Err(anyhow::anyhow!(
-        "Failed to resolve date stamp: {:?}",
-        file_path
-    ))
 }
 
 /// Print: メッセージを表示

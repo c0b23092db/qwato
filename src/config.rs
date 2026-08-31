@@ -116,8 +116,10 @@ impl DailyFile {
                 let month = parent.file_name()?.to_str()?;
                 let year = parent.parent()?.file_name()?.to_str()?;
 
-                if month.len() == 2 && month.chars().all(|c| c.is_ascii_digit())
-                    && year.len() == 4 && year.chars().all(|c| c.is_ascii_digit())
+                if month.len() == 2
+                    && month.chars().all(|c| c.is_ascii_digit())
+                    && year.len() == 4
+                    && year.chars().all(|c| c.is_ascii_digit())
                 {
                     let formatted = format!("{year}/{month}/{stem}");
                     NaiveDate::parse_from_str(&formatted, "%Y/%m/%d").ok()
@@ -130,11 +132,14 @@ impl DailyFile {
                 let month = parent.file_name()?.to_str()?;
                 let year = parent.parent()?.file_name()?.to_str()?;
 
-                if month.len() == 2 && month.chars().all(|c| c.is_ascii_digit())
-                    && year.len() == 4 && year.chars().all(|c| c.is_ascii_digit())
+                if month.len() == 2
+                    && month.chars().all(|c| c.is_ascii_digit())
+                    && year.len() == 4
+                    && year.chars().all(|c| c.is_ascii_digit())
                 {
                     let formatted = format!("{year}/{month}/{stem}");
-                    NaiveDate::parse_from_str(&formatted, "%Y/%m/%d").ok()
+                    NaiveDate::parse_from_str(&formatted, "%Y/%m/%d")
+                        .ok()
                         .or_else(|| NaiveDate::parse_from_str(&formatted, "%Y/%m/%Y-%m-%d").ok())
                 } else {
                     None
@@ -197,7 +202,8 @@ impl Config {
 
 /// Load: Config Files
 pub fn load_config(config_path: &Option<PathBuf>) -> Result<Config> {
-    if let Some(config_path) = config_path && !config_path.exists()
+    if let Some(config_path) = config_path
+        && !config_path.exists()
     {
         anyhow::bail!("Failed to Find: {}", config_path.display())
     };
