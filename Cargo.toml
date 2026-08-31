@@ -7,7 +7,6 @@ categories = ["command-line-utilities"]
 keywords = ["cli", "markdown", "journal", "note-taking", "obsidian"]
 readme = "README.md"
 license = "MIT"
-license-file = "LICENSE"
 authors = ["ikata"]
 repository = "https://github.com/c0b23092db/qwato"
 

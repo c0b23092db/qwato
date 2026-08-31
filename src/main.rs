@@ -6,7 +6,6 @@ mod command;
 use command::add::append_message;
 use command::command::format_command_list;
 use command::list::list_entries;
-mod tool;
 mod utils;
 
 use anyhow::{Context, Result, anyhow};
@@ -65,7 +64,14 @@ struct Args {
     argument: Vec<String>,
 }
 
-fn main() -> Result<()> {
+fn main() {
+    if let Err(error) = run() {
+        eprintln!("{error}");
+        std::process::exit(1);
+    }
+}
+
+fn run() -> Result<()> {
     let args = Args::parse();
     let mut config = load_config(&args.config)?;
     config.set_limit(

@@ -1,6 +1,6 @@
 use crate::config::Config;
-use crate::tool::create::create_file_if_not_exists;
-use crate::tool::markdown::{is_blank, is_heading, is_list};
+use crate::utils::create::create_file_if_not_exists;
+use crate::utils::markdown::{is_blank, is_heading, is_list};
 use crate::utils::{
     check_command_exists, conversion_target_file_path, expand_home, read_file_to_string,
     update_frontmatter_field,

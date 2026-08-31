@@ -1,5 +1,7 @@
 // Bug: Option `--done` //
 
+use crate::tool::datalog::DataLog;
+
 pub fn mark_task_done(
     config: &Config,
     command_names: &[String],

@@ -1,3 +1,7 @@
+pub mod create;
+pub mod datalog;
+pub mod markdown;
+
 use crate::config::{CommandConfig, Config};
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
@@ -21,7 +25,11 @@ pub fn expand_home(path: &PathBuf) -> Result<PathBuf> {
 /// Check: 指定したコマンドが存在するかどうかを確認
 pub fn check_command_exists(config: &Config, command_name: &str) -> Result<CommandConfig> {
     if let Some(command) = config.command.get(command_name) {
-        Ok(command.clone())
+        let mut command = command.clone();
+        if command.date_format.is_none() {
+            command.date_format = config.date_format.clone();
+        }
+        Ok(command)
     } else {
         Err(anyhow!("Unknown Command: {}", command_name))
     }

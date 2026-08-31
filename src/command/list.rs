@@ -1,77 +1,12 @@
 use crate::config::{CommandConfig, Config};
-use crate::tool::markdown::{is_blank, is_heading, is_list};
+use crate::utils::datalog::{DataLog, EntryKind};
 use crate::utils::{check_command_exists, conversion_target_directory_path};
 use anyhow::{Context, Result};
 use chrono::{NaiveDate, NaiveTime};
 use colored::*;
-use regex::Regex;
-use std::cmp::Reverse;
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::Path;
-
-#[derive(Debug)]
-struct DataLog {
-    re: Regex,
-    date_stamp: String,
-    messages: Vec<MessageLog>,
-}
-impl DataLog {
-    fn new(date_stamp: String, is_all: bool) -> Self {
-        Self {
-            re: Regex::new(if is_all {
-                r"^\s*(?:[-]\s|\d+[.]\s)(?:\[(.)\]\s*)?(?:(\d{2}:\d{2}:\d{2})\s+)?(.*)$"
-            } else {
-                r"^\s*(?:[-]\s|\d+[.]\s)(?:\[(.)\]\s*)?(\d{2}:\d{2}:\d{2})\s+(.*)$"
-            })
-            .unwrap(),
-            date_stamp,
-            messages: Vec::new(),
-        }
-    }
-
-    fn push(&mut self, line: &str, is_note: bool, is_task: bool) -> bool {
-        let Some(captures) = self.re.captures(line) else {
-            return false;
-        };
-        let checkbox = captures.get(1).map(|m| m.as_str());
-        let entry_is_task = checkbox.is_some();
-        let checked = matches!(checkbox, Some("x") | Some("X"));
-        if is_note && entry_is_task {
-            return false;
-        }
-        if is_task && !entry_is_task {
-            return false;
-        }
-        let timestamp = captures
-            .get(2)
-            .and_then(|m| m.as_str().parse::<NaiveTime>().ok());
-        let message = captures.get(3).map_or("", |m| m.as_str()).to_string();
-        self.messages.push(MessageLog {
-            timestamp,
-            kind: if entry_is_task {
-                EntryKind::Task { checked }
-            } else {
-                EntryKind::Memo
-            },
-            message,
-        });
-        true
-    }
-}
-
-#[derive(Debug)]
-struct MessageLog {
-    timestamp: Option<NaiveTime>,
-    kind: EntryKind,
-    message: String,
-}
-
-#[derive(Debug)]
-enum EntryKind {
-    Memo,
-    Task { checked: bool },
-}
 
 /// List: 指定されたコマンドのリスト項目を表示
 pub fn list_entries(
@@ -119,49 +54,11 @@ pub fn list_entries(
     for (file_index, (date_stamp, file_path)) in files.iter().enumerate() {
         let contents = fs::read_to_string(file_path)
             .with_context(|| format!("Failed to Read: {}", file_path.display()))?;
+        let parsed = DataLog::parse(&contents, date_stamp, is_note, is_task, is_all);
         let data_log = entries
             .entry(date_stamp.clone())
             .or_insert_with(|| DataLog::new(date_stamp.clone(), is_all));
-        let mut in_frontmatter = false;
-        let mut in_code_block = false;
-        let mut current_index: Option<usize> = None;
-        for line in contents.lines() {
-            let trimmed = line.trim();
-            // Skip: Frontmatter and Code Block
-            if trimmed == "---" {
-                in_frontmatter = !in_frontmatter;
-                in_code_block = false;
-                current_index = None;
-                continue;
-            }
-            if in_frontmatter {
-                continue;
-            }
-            if trimmed.starts_with("```") {
-                in_code_block = !in_code_block;
-                current_index = None;
-                continue;
-            }
-            if in_code_block {
-                continue;
-            }
-            if is_blank(trimmed) || is_heading(trimmed) || trimmed.starts_with('>') {
-                current_index = None;
-                continue;
-            }
-            if is_list(trimmed) {
-                current_index = None;
-            }
-            if data_log.push(line, is_note, is_task) {
-                current_index = Some(data_log.messages.len() - 1);
-                continue;
-            }
-            if let Some(index) = current_index {
-                let current_message = &mut data_log.messages[index].message;
-                current_message.push('\n');
-                current_message.push_str(trimmed);
-            }
-        }
+        data_log.messages.extend(parsed.messages);
 
         let next_date = files.get(file_index + 1).map(|file| file.0.as_str());
         if next_date != Some(date_stamp.as_str())
@@ -182,9 +79,7 @@ pub fn list_entries(
             data_log
                 .messages
                 .retain(|entry| message_matches_tags(&entry.message, tag_filters));
-            data_log
-                .messages
-                .sort_by_key(|entry| Reverse(entry.timestamp.unwrap_or(NaiveTime::MIN)));
+            data_log.sort_messages();
             data_log
         })
         .collect();
@@ -204,13 +99,8 @@ pub fn list_entries(
                 return Ok(());
             }
             match message.kind {
-                EntryKind::Memo => {
-                    print_message(message.timestamp, None, &message.message);
-                }
-                EntryKind::Task { checked } => {
-                    let checkbox = if checked { "[x]" } else { "[ ]" };
-                    print_message(message.timestamp, Some(checkbox), &message.message);
-                }
+                EntryKind::Memo => print_message(message.timestamp, &message.message, None),
+                EntryKind::Task { checked } => print_message(message.timestamp, &message.message, Some(checked)),
             }
             printed += 1;
         }
@@ -224,11 +114,20 @@ fn is_command_file(file_path: &Path, command: &CommandConfig) -> bool {
     let Some(pattern) = command.file.as_deref() else {
         return true;
     };
-    let Some(file_name) = file_path.file_name().and_then(|name| name.to_str()) else {
-        return false;
-    };
     let pattern = pattern.to_string_lossy();
-    file_name == pattern || NaiveDate::parse_from_str(file_name, &pattern).is_ok()
+    let file_name = file_path.file_name().and_then(|name| name.to_str());
+
+    if file_name == Some(pattern.as_ref()) {
+        return true;
+    }
+
+    let format = command.date_format();
+    match format.parse_date_from_path(file_path) {
+        Some(_) => true,
+        None => file_name
+            .map(|name| NaiveDate::parse_from_str(name, &pattern).is_ok())
+            .unwrap_or(false),
+    }
 }
 
 /// Check: Tag
@@ -280,6 +179,11 @@ fn normalize_tag(tag: &str) -> String {
 
 /// Resolve: ファイル名から日付を取得する
 fn resolve_date_stamp(file_path: &Path, command: &CommandConfig) -> Result<String> {
+    let format = command.date_format();
+    if let Some(date) = format.parse_date_from_path(file_path) {
+        return Ok(date.to_string());
+    }
+
     if let Some(file_name) = file_path.file_stem().and_then(|s| s.to_str()) {
         if let Some(pattern) = command.file.as_deref()
             && let Ok(date) = NaiveDate::parse_from_str(file_name, &pattern.to_string_lossy())
@@ -311,20 +215,22 @@ fn resolve_date_stamp(file_path: &Path, command: &CommandConfig) -> Result<Strin
 }
 
 /// Print: メッセージを表示
-fn print_message(timestamp: Option<NaiveTime>, checkbox: Option<&str>, message: &str) {
+fn print_message(timestamp: Option<NaiveTime>, message: &str, checkbox: Option<bool>) {
     let mut lines = message.lines();
     let Some(first_line) = lines.next() else {
         return;
     };
     match (timestamp, checkbox) {
         (Some(timestamp), Some(checkbox)) => {
-            println!("\t{}\t{} {}", timestamp, checkbox, first_line);
+            let checkbox_str = if checkbox { "[x]" } else { "[ ]" };
+            println!("\t{}\t{} {}", timestamp, checkbox_str, first_line);
         }
         (Some(timestamp), None) => {
             println!("\t{}\t{}", timestamp, first_line);
         }
         (None, Some(checkbox)) => {
-            println!("\t{} {}", checkbox, first_line);
+            let checkbox_str = if checkbox { "[x]" } else { "[ ]" };
+            println!("\t{} {}", checkbox_str, first_line);
         }
         (None, None) => {
             println!("\t{}", first_line);
