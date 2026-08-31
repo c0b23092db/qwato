@@ -8,9 +8,9 @@ qwa
 Obsidian QuickAdd Captureを使ってデイリーノートに書きこんでいる人向けです。わざわざObsidianを立ち上げずともターミナルからコマンドで書き込める利便性を味わってください。
 
 ## ⭐ 特徴 ⭐
+- 一日一ページを基本とした日記ツール
 - Obsidian QuickAdd Captureを再現した一行追記
 - ObsidianのThinoを再現したタイムライン表示
-- 一日一ページを基本とした日記ツール
 
 ## 💻 実行環境 💻
 ### OS
@@ -50,19 +50,19 @@ Arguments:
   [arguments]...  Additional arguments
 
 Options:
-  -a, --add                   Add a new message
-  -c, --checkbox              Add a new checkbox
-  -l, --list                  List all commands
-  -n, --note                  List all notes
-  -t, --task                  List all tasks
-      --all                   List all messages, including messages without a time format
-      --tag <TAG>...          Tags for the message
-      --link <LINK>           Link for the message
-      --limit <LIMIT>         Show the limit of list messages
-      --command               Check to Use Command
-      --config <config_path>  Config File Path
-  -h, --help                  Print help
-  -V, --version               Print version
+  -a, --add            Add a new message
+  -c, --checkbox       Add a new checkbox
+  -l, --list           List all commands
+  -n, --note           List all notes
+  -t, --task           List all tasks
+      --all            List all messages, including messages without a time format
+      --tag <TAG>...   Tags for the message
+      --link <LINK>    Link for the message
+      --limit <LIMIT>  Show the limit of list messages
+      --command        Check to Use Command
+      --config <path>  Config File Path
+  -h, --help           Print help
+  -V, --version        Print version
 ```
 
 ### 引数指定の考え方
@@ -152,9 +152,10 @@ qwa --list --limit 10
 
 #### `--config`
 ```bash
-qwa --config <config_path>
+qwa --config <path>
 ```
 読み込む設定ファイルを指定する。
+ディレクトリであれば、ディレクトリ内にある設定ファイルを読み込む。
 
 ### 設定表示
 
@@ -201,7 +202,7 @@ qwa --version
 
 ## ⚙ 設定ファイル ⚙
 **注意事項**
-- 優先度の高い順に、指定した設定ファイル、`./qwato.toml`、`~/.config/qwato/config.toml`を読み込む。
+- 優先度の高い順に、指定した設定ファイル、`./qwato.toml`、`~/.config/qwato`にあるtomlファイルを読み込む。
 - Rustの[chrono](https://docs.rs/chrono)で日付を扱う。
 
 ### デフォルト設定

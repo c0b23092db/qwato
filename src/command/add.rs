@@ -22,9 +22,10 @@ pub fn append_message(
 ) -> Result<()> {
     let command = check_command_exists(config, command_name)?;
     let base_directory = expand_home(
-        config
+        command
             .base_directory
             .as_ref()
+            .or(config.base_directory.as_ref())
             .unwrap_or(&PathBuf::from("~")),
     )?;
     let file_path = conversion_target_file_path(config, command_name, &command)?;
