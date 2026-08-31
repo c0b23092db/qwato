@@ -1,5 +1,5 @@
 base_directory = "./tests/output"
-default_command = "add_single"
+default_command = "single_add"
 time_format = "%H:%M:%S"
 
 [created]
