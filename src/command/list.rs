@@ -1,11 +1,12 @@
 use crate::config::Config;
 use crate::utils::datalog::{DataLog, EntryKind};
 use anyhow::Result;
-use chrono::NaiveTime;
+use chrono::{NaiveDate, NaiveTime};
 use colored::*;
 use std::collections::HashSet;
 
 /// List: 指定されたコマンドのリスト項目を表示
+#[allow(clippy::too_many_arguments)]
 pub fn list_entries(
     config: &Config,
     command_names: &[String],
@@ -13,6 +14,8 @@ pub fn list_entries(
     is_note: bool,
     is_task: bool,
     is_all: bool,
+    from_date: Option<NaiveDate>,
+    to_date: Option<NaiveDate>,
 ) -> Result<()> {
     let limit = config.list.as_ref().map(|list| list.limit).unwrap_or(10);
     if limit == 0 {
@@ -24,6 +27,21 @@ pub fn list_entries(
     // Sort: 日付順
     let mut sorted_entries: Vec<DataLog> = entries
         .into_values()
+        .filter(|data_log| {
+            if let Ok(date) = NaiveDate::parse_from_str(&data_log.date_stamp, "%Y-%m-%d") {
+                if let Some(from) = from_date
+                    && date < from
+                {
+                    return false;
+                }
+                if let Some(to) = to_date
+                    && date > to
+                {
+                    return false;
+                }
+            }
+            true
+        })
         .map(|mut data_log| {
             data_log.messages.retain(|entry| {
                 matches!(entry.kind, EntryKind::Memo)

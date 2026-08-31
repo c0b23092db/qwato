@@ -244,18 +244,18 @@ fn find_config_path(path: &Option<PathBuf>) -> Result<Vec<PathBuf>> {
         .unwrap_or_else(|| PathBuf::from("~"))
         .join(".config")
         .join("qwato");
-    if home_config_dir.is_dir() {
-        if let Ok(entries) = std::fs::read_dir(&home_config_dir) {
-            let mut toml_files = Vec::new();
-            for entry in entries.flatten() {
-                let p = entry.path();
-                if p.is_file() && p.extension().is_some_and(|ext| ext == "toml") {
-                    toml_files.push(p);
-                }
+    if home_config_dir.is_dir()
+        && let Ok(entries) = std::fs::read_dir(&home_config_dir)
+    {
+        let mut toml_files = Vec::new();
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_file() && p.extension().is_some_and(|ext| ext == "toml") {
+                toml_files.push(p);
             }
-            toml_files.sort();
-            config_paths.extend(toml_files);
         }
+        toml_files.sort();
+        config_paths.extend(toml_files);
     }
 
     // Current directory: ./qwato.toml

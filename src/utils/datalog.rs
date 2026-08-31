@@ -59,6 +59,7 @@ impl DataLog {
         true
     }
 
+    /// ファイルの内容をパースしてDataLogを生成
     pub fn parse(
         contents: &str,
         date_stamp: &str,
