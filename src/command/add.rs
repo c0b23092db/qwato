@@ -1,6 +1,6 @@
 use crate::config::Config;
-use crate::tool::create::create_file_if_not_exists;
-use crate::tool::markdown::{is_blank, is_heading, is_list};
+use crate::utils::create::create_file_if_not_exists;
+use crate::utils::markdown::{is_blank, is_heading, is_list};
 use crate::utils::{
     check_command_exists, conversion_target_file_path, expand_home, read_file_to_string,
     update_frontmatter_field,
@@ -15,15 +15,17 @@ pub fn append_message(
     config: &Config,
     command_name: &str,
     message: &str,
+    link: Option<&str>,
     clap_tag: &[String],
     is_checkbox: bool,
     is_time: bool,
 ) -> Result<()> {
     let command = check_command_exists(config, command_name)?;
     let base_directory = expand_home(
-        config
+        command
             .base_directory
             .as_ref()
+            .or(config.base_directory.as_ref())
             .unwrap_or(&PathBuf::from("~")),
     )?;
     let file_path = conversion_target_file_path(config, command_name, &command)?;
@@ -62,11 +64,17 @@ pub fn append_message(
             .to_string()
             + " "
     };
+    // Format: Link //
+    let message = if let Some(link) = link {
+        format!("[{}]({})", message, link)
+    } else {
+        message.to_string()
+    };
     // Format: Message //
     let in_message = if !is_checkbox {
-        "- ".to_string() + &set_time + &tags + message
+        "- ".to_string() + &set_time + &tags + &message
     } else {
-        "- [ ] ".to_string() + &set_time + &tags + message
+        "- [ ] ".to_string() + &set_time + &tags + &message
     };
     // Update: Modified Field //
     if let Some(modified_config) = &config.modified

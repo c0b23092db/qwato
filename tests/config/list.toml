@@ -5,5 +5,5 @@ default_command = "target"
 limit = 10
 
 [command.target]
-directory = "target"
+directory = "target/line"
 file = "%Y-%m-%d.md"

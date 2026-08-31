@@ -1,12 +1,12 @@
 [package]
 name = "qwato"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "CLI: Write a Memo for your notes in the terminal."
 categories = ["command-line-utilities"]
 keywords = ["cli", "markdown", "journal", "note-taking", "obsidian"]
 readme = "README.md"
-license-file = "LICENSE"
+license = "MIT"
 authors = ["ikata"]
 repository = "https://github.com/c0b23092db/qwato"
 
@@ -23,10 +23,10 @@ panic = "abort"
 codegen-units = 1
 
 [dependencies]
-clap = { version = "4.6.5", features = ["derive"] }
+clap = { version = "4.6.6", features = ["derive"] }
 chrono = "0.4.45"
 serde = { version = "1", features = ["derive"] }
-toml = "0.8"
+toml = "1.1.4"
 anyhow = "1.0"
 dirs = "6.0.0"
 regex = "1.13.1"

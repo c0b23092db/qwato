@@ -1,0 +1,6 @@
+base_directory = "./tests/output/workspace_b"
+
+[command.bbb]
+auto_create = true
+file = "bbb.md"
+not_format = true

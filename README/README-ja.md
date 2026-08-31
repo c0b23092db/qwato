@@ -8,9 +8,9 @@ qwa
 Obsidian QuickAdd Captureを使ってデイリーノートに書きこんでいる人向けです。わざわざObsidianを立ち上げずともターミナルからコマンドで書き込める利便性を味わってください。
 
 ## ⭐ 特徴 ⭐
+- 一日一ページを基本とした日記ツール
 - Obsidian QuickAdd Captureを再現した一行追記
 - ObsidianのThinoを再現したタイムライン表示
-- 一日一ページを基本とした日記ツール
 
 ## 💻 実行環境 💻
 ### OS
@@ -50,20 +50,23 @@ Arguments:
   [arguments]...  Additional arguments
 
 Options:
-  -a, --add                   Add a new message
-  -c, --checkbox              Add a new checkbox
-  -l, --list                  List all commands
-  -n, --note                  List all notes
-  -t, --task                  List all tasks
-      --all                   List all messages, including messages without a time format
-      --tag <TAG>...          Tags for the message
-      --limit <LIMIT>         Show the limit of list messages
-      --command               Check to Use Command
-      --config <config_path>  Config File Path
-      --utc-offset-time       Debug: Show UTC Offset Time
-      --colon-sharp-question  Debug: Show Load Config File
-  -h, --help                  Print help
-  -V, --version               Print version
+  -a, --add                Add a new message
+  -c, --checkbox           Add a new checkbox
+      --last-edit          Edit the last inserted memo
+  -s, --summary            Show summary of messages updated today
+  -l, --list               List all commands
+  -n, --note               List all notes
+  -t, --task               List all tasks
+      --all                List all messages, including messages without a time format
+      --tag <TAG>...       Tags for the message
+      --link <LINK>        Link for the message
+      --from <YYYY-MM-DD>  Filter from date (inclusive, format: YYYY-MM-DD)
+      --to <YYYY-MM-DD>    Filter to date (inclusive, format: YYYY-MM-DD)
+      --limit <LIMIT>      Show the limit of list messages
+      --command            Check to Use Command
+      --config <path>      Config File Path
+  -h, --help               Print help
+  -V, --version            Print version
 ```
 
 ### 引数指定の考え方
@@ -96,7 +99,19 @@ qwa --checkbox [command] [message] [message] ...
 ```
 指定したファイルにチェックボックス付きでメモを追記する。二つ目の引数以降はすべて一行として扱われる。
 
+#### `--last-edit`
+```bash
+qwa --last-edit [message] ...
+```
+最後に追記したメモを編集する。二つ目の引数以降はすべて一行として扱われる。
+
 ### リスト表示
+
+#### `--summary`
+```bash
+qwa --summary
+```
+今日更新されたメモのサマリーを表示する。
 
 #### `--list`
 ```bash
@@ -127,11 +142,17 @@ qwa --all
 
 ### 動作変更
 
-#### `--tag`
+#### `--from` / `--to`
+```bash
+qwa --list --from <YYYY-MM-DD> --to <YYYY-MM-DD>
+```
+指定した期間のリストを表示する。`--from`は指定した日付以降、`--to`は指定した日付以前のリストを表示する。
+
+#### `--tag` or `--tags`
 ```bash
 qwa --tag <TAG>
 ```
-`tag1,tag2,tag3`のようにカンマ区切りで指定する。
+`tag1,tag2,tag3`のようにカンマ区切りで指定する。`--tags`がエイリアスとして使える。
 ```bash
 qwa --add [message] --tag <TAG>...
 qwa --checkbox [message] --tag <TAG>...
@@ -145,6 +166,12 @@ qwa --all --tag <TAG>...
 ```
 指定したタグのいずれかを検索し表示する。
 
+#### `--link`
+```bash
+qwa --link <LINK>
+```
+メモにリンクを付与する。
+
 #### `--limit`
 ```bash
 qwa --list --limit 10
@@ -153,9 +180,10 @@ qwa --list --limit 10
 
 #### `--config`
 ```bash
-qwa --config <config_path>
+qwa --config <path>
 ```
 読み込む設定ファイルを指定する。
+ディレクトリであれば、ディレクトリ内にある設定ファイルを読み込む。
 
 ### 設定表示
 
@@ -169,15 +197,11 @@ qwa --command [command] [command]...
 ```
 指定したコマンドを詳細表示する。
 
-### デバッグ出力
+### 非表示のオプション
 
-#### `--colon-sharp-question`
-```bash
-qwa --colon-sharp-question
-```
-読み込んだ設定ファイルを`"{:#?}"`の形式で表示する。
+#### デバッグ出力
 
-#### `--utc-offset-time`
+##### `--utc-offset-time`
 ```bash
 qwa --utc-offset-time
 ```
@@ -185,6 +209,12 @@ qwa --utc-offset-time
 ```
 2026-08-21 00:15:55.451988700 +09:00
 ```
+
+##### `--colon-sharp-question`
+```bash
+qwa --colon-sharp-question
+```
+読み込んだ設定ファイルを`"{:#?}"`の形式で表示する。
 
 ### `--help`
 ```bash
@@ -200,7 +230,7 @@ qwa --version
 
 ## ⚙ 設定ファイル ⚙
 **注意事項**
-- 優先度の高い順に、指定した設定ファイル、`./qwato.toml`、`~/.config/qwato/config.toml`を読み込む。
+- 優先度の高い順に、指定した設定ファイル、`./qwato.toml`、`~/.config/qwato`にあるtomlファイルを読み込む。
 - Rustの[chrono](https://docs.rs/chrono)で日付を扱う。
 
 ### デフォルト設定
@@ -236,6 +266,13 @@ trueの場合、グローバル読み込みの対象外になる。
 trueの場合、強制的に`default_command`を実行するようにする。
 ##### `time_format`
 リストの先頭に登録されるchrono形式のフォーマット。
+##### `data_format`
+取得するファイルの形式。Obsidianのデイリーノートを参考にしている。
+- `line`: YYYY-MM-DD.md
+- `slash`: YYYY/MM/DD.md
+- `slash_line`: YYYY/MM/DD/YYYY-MM-DD.md
+- `header`: file-name.md / Header for YYYY-MM-DD
+- `onefile`: file-name.md
 #### **list**
 ##### `limit`
 表示するリストの数を指定する。
@@ -256,6 +293,13 @@ MarkdownにYAMLかつfieldが存在する場合、ファイルの更新時刻に
 #### **command**
 ##### `auto_create`
 ファイルが存在しない場合、作成するかを決定する。
+##### `date_format`
+取得するファイルの形式。Globalの設定を上書きする。
+- `line`: YYYY-MM-DD.md
+- `slash`: YYYY/MM/DD.md
+- `slash_line`: YYYY/MM/DD/YYYY-MM-DD.md
+- `header`: file-name.md / Header for YYYY-MM-DD
+- `onefile`: file-name.md
 ##### `template`
 ファイルの新規作成時、コピー元となるファイルのパス。
 ##### `directory`

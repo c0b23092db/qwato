@@ -1,3 +1,7 @@
+pub mod create;
+pub mod datalog;
+pub mod markdown;
+
 use crate::config::{CommandConfig, Config};
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
@@ -21,7 +25,14 @@ pub fn expand_home(path: &PathBuf) -> Result<PathBuf> {
 /// Check: 指定したコマンドが存在するかどうかを確認
 pub fn check_command_exists(config: &Config, command_name: &str) -> Result<CommandConfig> {
     if let Some(command) = config.command.get(command_name) {
-        Ok(command.clone())
+        let mut command = command.clone();
+        if command.date_format.is_none() {
+            command.date_format = config.date_format.clone();
+        }
+        if command.base_directory.is_none() {
+            command.base_directory = config.base_directory.clone();
+        }
+        Ok(command)
     } else {
         Err(anyhow!("Unknown Command: {}", command_name))
     }
@@ -34,9 +45,10 @@ pub fn conversion_target_file_path(
     command: &CommandConfig,
 ) -> Result<PathBuf> {
     let base_directory = expand_home(
-        config
+        command
             .base_directory
             .as_ref()
+            .or(config.base_directory.as_ref())
             .unwrap_or(&PathBuf::default()),
     )?;
     let now = Local::now();
@@ -61,9 +73,10 @@ pub fn conversion_target_directory_path(
     command: &CommandConfig,
 ) -> Result<PathBuf> {
     let base_directory = expand_home(
-        config
+        command
             .base_directory
             .as_ref()
+            .or(config.base_directory.as_ref())
             .unwrap_or(&PathBuf::default()),
     )?;
     let now = Local::now();

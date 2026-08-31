@@ -1,0 +1,6 @@
+base_directory = "./tests/output/workspace_a"
+
+[command.aaa]
+auto_create = true
+file = "aaa.md"
+not_format = true
