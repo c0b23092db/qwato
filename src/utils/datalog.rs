@@ -1,6 +1,8 @@
 use crate::config::{CommandConfig, Config, DailyFile};
 use crate::utils::markdown::{is_blank, is_heading, is_list};
-use crate::utils::{check_command_exists, conversion_target_directory_path};
+use crate::utils::{
+    check_command_exists, conversion_target_directory_path, conversion_target_file_path,
+};
 use anyhow::{Context, Result, anyhow};
 use chrono::{NaiveDate, NaiveTime};
 use regex::Regex;
@@ -8,6 +10,19 @@ use std::cmp::Reverse;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MessageLog {
+    pub timestamp: Option<NaiveTime>,
+    pub kind: EntryKind,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EntryKind {
+    Memo,
+    Task { checked: bool },
+}
 
 #[derive(Debug, Clone)]
 pub struct DataLog {
@@ -237,7 +252,18 @@ impl DataLog {
 
         let mut entries = BTreeMap::new();
 
+        // Check if file path contains date placeholders
+        let has_date_placeholder = command
+            .file
+            .as_ref()
+            .map(|f| {
+                let file_str = f.to_string_lossy();
+                file_str.contains('%')
+            })
+            .unwrap_or(true);
+
         if matches!(command.date_format(), DailyFile::Header) {
+            // Get: ヘッダ形式のファイル //
             for file_path in files {
                 let contents = fs::read_to_string(&file_path)
                     .with_context(|| format!("Failed to Read: {}", file_path.display()))?;
@@ -251,7 +277,19 @@ impl DataLog {
                     is_all,
                 );
             }
+        } else if matches!(command.date_format(), DailyFile::Onefile) || !has_date_placeholder {
+            // Get: 一つのファイル //
+            let file_path = conversion_target_file_path(config, command_name, &command)?;
+            let contents = fs::read_to_string(&file_path)
+                .with_context(|| format!("Failed to Read: {}", file_path.display()))?;
+            let date_stamp = resolve_date_stamp(&file_path, &command)?;
+            let parsed = DataLog::parse(&contents, &date_stamp, is_note, is_task, is_all);
+            let data_log = entries
+                .entry(date_stamp.clone())
+                .or_insert_with(|| DataLog::new(date_stamp, is_all));
+            data_log.messages.extend(parsed.messages);
         } else {
+            // Get: 複数ファイル //
             let mut stamped_files = Vec::new();
             for file_path in files {
                 let date_stamp = resolve_date_stamp(&file_path, &command)?;
@@ -272,19 +310,6 @@ impl DataLog {
 
         Ok(entries)
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MessageLog {
-    pub timestamp: Option<NaiveTime>,
-    pub kind: EntryKind,
-    pub message: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum EntryKind {
-    Memo,
-    Task { checked: bool },
 }
 
 /// ディレクトリ内の全ファイルを再帰的に探索

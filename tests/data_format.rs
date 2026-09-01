@@ -1,6 +1,6 @@
 mod utils;
 use utils::run_qwa;
-const CONFIG: &str = "./tests/config/date.toml";
+const CONFIG: &str = "./tests/config/date_format.toml";
 
 fn run_list(args: &[&str]) -> String {
     let output = run_qwa(CONFIG, args);
