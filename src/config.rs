@@ -108,41 +108,26 @@ pub enum DailyFile {
 }
 
 impl DailyFile {
+    /// Parse: Date from File Path
     pub fn parse_date_from_path(&self, file_path: &Path) -> Option<NaiveDate> {
         let stem = file_path.file_stem()?.to_str()?;
-
         match self {
             DailyFile::Line => NaiveDate::parse_from_str(stem, "%Y-%m-%d").ok(),
-            DailyFile::Slash => {
+            DailyFile::Slash | DailyFile::SlashLine => {
                 let parent = file_path.parent()?;
                 let month = parent.file_name()?.to_str()?;
                 let year = parent.parent()?.file_name()?.to_str()?;
-
                 if month.len() == 2
                     && month.chars().all(|c| c.is_ascii_digit())
                     && year.len() == 4
                     && year.chars().all(|c| c.is_ascii_digit())
                 {
                     let formatted = format!("{year}/{month}/{stem}");
-                    NaiveDate::parse_from_str(&formatted, "%Y/%m/%d").ok()
-                } else {
-                    None
-                }
-            }
-            DailyFile::SlashLine => {
-                let parent = file_path.parent()?;
-                let month = parent.file_name()?.to_str()?;
-                let year = parent.parent()?.file_name()?.to_str()?;
-
-                if month.len() == 2
-                    && month.chars().all(|c| c.is_ascii_digit())
-                    && year.len() == 4
-                    && year.chars().all(|c| c.is_ascii_digit())
-                {
-                    let formatted = format!("{year}/{month}/{stem}");
-                    NaiveDate::parse_from_str(&formatted, "%Y/%m/%d")
-                        .ok()
-                        .or_else(|| NaiveDate::parse_from_str(&formatted, "%Y/%m/%Y-%m-%d").ok())
+                    if matches!(self, DailyFile::Slash) {
+                        NaiveDate::parse_from_str(&formatted, "%Y/%m/%d").ok()
+                    } else {
+                        NaiveDate::parse_from_str(&formatted, "%Y/%m/%Y-%m-%d").ok()
+                    }
                 } else {
                     None
                 }
@@ -200,6 +185,7 @@ impl Config {
             self.list = Some(ListConfig { limit });
         }
     }
+    /// Apply: Base Directory to Commands
     pub fn apply_base_directory_to_commands(&mut self) {
         if let Some(ref base_dir) = self.base_directory {
             for command in self.command.values_mut() {

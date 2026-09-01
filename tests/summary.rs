@@ -46,12 +46,8 @@ fn test_summary_with_specific_command() {
     let lines: Vec<&str> = stdout.lines().collect();
 
     assert!(
-        lines
-            .iter()
-            .any(|line| line.contains("test memo")),
+        lines.iter().any(|line| line.contains("test memo")),
         "Expected 'test memo' in summary output, got: {:?}",
         lines
     );
 }
-
-

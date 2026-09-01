@@ -1,0 +1,35 @@
+base_directory = "./tests"
+default_command = "line"
+date_format = "line"
+
+[list]
+limit = 10
+
+[command.line]
+directory = "target/line"
+file = "%Y-%m-%d.md"
+
+[command.slash]
+date_format = "slash"
+directory = "target/slash"
+file = "%Y/%m/%d.md"
+
+[command.slash_line]
+directory = "target/slash_line"
+file = "%Y/%m/%Y-%m-%d.md"
+
+[command.header]
+date_format = "header"
+directory = "target/header"
+file = "header.md"
+insert = "## %Y-%m-%d"
+
+[command.onefile]
+date_format = "onefile"
+directory = "target/onefile"
+file = "onefile.md"
+
+[command.onefile_not_line]
+date_format = "line"
+directory = "target/onefile"
+file = "onefile.md"
